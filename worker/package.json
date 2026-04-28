@@ -1,0 +1,18 @@
+{
+  "name": "wheretowatch-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --remote=false --test-scheduled",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "trigger": "wrangler dev --test-scheduled --remote=false",
+    "kv:create": "wrangler kv:namespace create W2W_KV",
+    "secrets:list": "wrangler secret list",
+    "test:transform": "node --test src/__tests__/transform.test.js"
+  },
+  "devDependencies": {
+    "wrangler": "^3.95.0"
+  }
+}

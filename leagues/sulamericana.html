@@ -336,9 +336,13 @@
   <span><a href="../WhereToWatch FC.html" data-i18n="crumbs.home">Início</a> · <a href="../about.html" data-i18n="footer.about">Sobre</a> · <a href="../networks/index.html" data-i18n="footer.networks">Canais</a> · <a href="../privacy.html" data-i18n="footer.privacy">Privacidade</a> · <a href="../contact.html" data-i18n="footer.contact">Contato</a></span>
 </footer>
 
+<script src="../loader.js"></script>
 <script src="../i18n.js"></script>
-<script src="data.js"></script>
 <script>
+function w2wBoot() {
+  if (window._w2wBooted) return;
+  window._w2wBooted = true;
+
   I18N.apply();
 
   const slug = (location.pathname.split('/').pop() || '').replace('.html','');
@@ -415,6 +419,9 @@
   } else {
     st.innerHTML = `<div style="color:var(--text-mute); font-size:13px; padding:8px 0;">${I18N.pick(L.standingsNote) || I18N.t('lg.standings.bracket')}</div>`;
   }
+}
+if (window.LEAGUES && window.NETWORKS) w2wBoot();
+else document.addEventListener('w2w:data-ready', w2wBoot);
 </script>
 </body>
 </html>

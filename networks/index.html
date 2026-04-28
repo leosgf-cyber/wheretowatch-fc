@@ -265,10 +265,13 @@
   <span><a href="../about.html" data-i18n="footer.about">Sobre</a> · <a href="index.html" data-i18n="footer.networks">Canais</a> · <a href="../privacy.html" data-i18n="footer.privacy">Privacidade</a> · <a href="../contact.html" data-i18n="footer.contact">Contato</a></span>
 </footer>
 
+<script src="../loader.js"></script>
 <script src="../i18n.js"></script>
-<script src="../leagues/data.js"></script>
-<script src="networks.js"></script>
 <script>
+function w2wBoot() {
+  if (window._w2wBooted) return;
+  window._w2wBooted = true;
+
   I18N.apply();
 
   // Count matches per broadcaster name across all leagues
@@ -327,6 +330,9 @@
       render(btn.dataset.kind);
     });
   });
+}
+if (window.LEAGUES && window.NETWORKS) w2wBoot();
+else document.addEventListener('w2w:data-ready', w2wBoot);
 </script>
 </body>
 </html>

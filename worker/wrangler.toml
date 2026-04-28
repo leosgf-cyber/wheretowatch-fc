@@ -1,0 +1,38 @@
+name = "wheretowatch-worker"
+main = "src/index.js"
+compatibility_date = "2026-04-28"
+compatibility_flags = ["nodejs_compat"]
+
+# Fase 1: cron diário às 03:00 BRT (= 06:00 UTC).
+# Fase 2: adicionar "*/15 * * * *" na lista (Worker filtra por janela de jogo).
+# Fase 3: adicionar "* * * * *" na lista (idem).
+[triggers]
+crons = ["0 6 * * *"]
+
+# KV namespace — criar antes de deploy:
+#   wrangler kv:namespace create W2W_KV
+# Cole o ID retornado abaixo.
+[[kv_namespaces]]
+binding = "W2W_KV"
+id = "REPLACE_ME_KV_ID"
+
+# Vars públicos (não-secret). SHEET_ID e GOOGLE_SA_EMAIL podem ficar aqui.
+[vars]
+SHEET_ID = "REPLACE_ME_SHEET_ID"
+GOOGLE_SA_EMAIL = "REPLACE_ME_SERVICE_ACCOUNT_EMAIL"
+SEASON = "2026"
+
+# Match window: minutos antes/depois do kickoff em que o Worker considera
+# "janela de jogo ativa" (Fase 2+).
+MATCH_WINDOW_PRE_MIN = "10"
+MATCH_WINDOW_POST_MIN = "150"
+
+# Secrets (NÃO definir aqui — usar `wrangler secret put`):
+#   API_FOOTBALL_KEY    — chave da API-Football (RapidAPI)
+#   GOOGLE_SA_KEY       — private_key do service account (BEGIN PRIVATE KEY...)
+
+# Static assets (data.seed.json) — Cloudflare Workers Static Assets.
+# A partir do Wrangler 3.91+ basta apontar pro diretório:
+[assets]
+directory = "./public"
+binding = "ASSETS"
