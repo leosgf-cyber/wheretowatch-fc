@@ -1,0 +1,1328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WhereToWatch FC — Find where to watch your favorite leagues</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:        #0d1410;
+    --bg-2:      #111a14;
+    --surface:   #15211a;
+    --surface-2: #1c2c23;
+    --line:      #243b30;
+    --line-soft: #1a2820;
+    --text:      #e7ecf5;
+    --text-dim:  #9aa6bd;
+    --text-mute: #65718a;
+    --accent:    #22c55e;        /* stadium green */
+    --accent-ink:#0a1410;
+    --live:      #ff4d6a;
+    --warn:      #ffb547;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"Space Grotesk", ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(34,197,94,0.06), transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, rgba(80,140,255,0.05), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    font-feature-settings:"ss01","cv11";
+  }
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; }
+
+  /* ─────────────── header ─────────────── */
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    backdrop-filter:saturate(140%) blur(10px);
+    background:rgba(13,20,16,0.78);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .topbar-inner{
+    max-width:1280px; margin:0 auto;
+    padding:14px 28px;
+    display:flex; align-items:center; gap:24px;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    font-weight:700; font-size:18px; letter-spacing:-0.01em;
+  }
+  .logo-mark{
+    width:32px; height:32px; border-radius:9px;
+    background:var(--accent);
+    color:var(--accent-ink);
+    display:grid; place-items:center;
+    font-weight:700; font-size:14px;
+    box-shadow:0 0 0 1px rgba(34,197,94,0.4), 0 8px 24px -10px rgba(34,197,94,0.55);
+    position:relative; overflow:hidden;
+  }
+  .logo-mark::after{
+    content:""; position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(135deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 6px);
+  }
+  .logo-mark span{ position:relative; z-index:1; }
+  .logo-name{ font-weight:700; }
+  .logo-name em{ font-style:normal; color:var(--accent); }
+
+  .nav{ display:flex; gap:6px; margin-left:8px; }
+  .nav a{
+    padding:8px 12px; border-radius:8px;
+    font-size:14px; color:var(--text-dim);
+    transition:color .15s, background .15s;
+  }
+  .nav a:hover{ color:var(--text); background:var(--surface); }
+  .nav a.active{ color:var(--accent-ink); background:var(--accent); font-weight:600; }
+
+  .search{
+    margin-left:auto;
+    position:relative; flex:0 1 360px;
+  }
+  .search input{
+    width:100%; padding:11px 14px 11px 40px;
+    border-radius:10px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:inherit; font-size:14px;
+    outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .search input::placeholder{ color:var(--text-mute); }
+  .search input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(34,197,94,0.18);
+  }
+  .search svg{ position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--text-mute); }
+  .search kbd{
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    color:var(--text-mute);
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:5px; padding:2px 6px;
+  }
+
+  .tz-pill{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:"JetBrains Mono", monospace; font-size:12px;
+    color:var(--text-dim);
+    background:var(--surface);
+    border:1px solid var(--line);
+    padding:8px 10px; border-radius:8px;
+  }
+  .tz-pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); }
+
+  /* ─────────────── ad slots ─────────────── */
+  .ad{
+    background:#1a2820;
+    border:2px dashed #5a6a60;
+    border-radius:12px;
+    outline:1px solid rgba(34,197,94,0.08);
+    color:#aab5ad;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"JetBrains Mono", monospace;
+    font-size:13px; letter-spacing:0.18em; text-transform:uppercase;
+    position:relative;
+  }
+  .ad::before{
+    content:"Advertisement";
+    position:absolute; top:8px; left:12px;
+    font-size:11px; letter-spacing:0.2em;
+    color:#9aa6a0;
+  }
+  .ad-leaderboard{
+    width:100%; max-width:728px; height:90px;
+    margin:0 auto;
+  }
+  .ad-leaderboard-wrap{
+    padding:20px 28px 0;
+    max-width:1280px; margin:0 auto;
+  }
+  .ad-half-page{
+    width:300px; height:600px;
+    margin:0 auto;
+  }
+
+  /* ─────────────── page layout ─────────────── */
+  .page{
+    max-width:1280px; margin:0 auto;
+    padding:24px 28px 80px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 320px;
+    gap:32px;
+  }
+
+  /* ─────────────── hero ─────────────── */
+  .hero{
+    padding:36px 0 28px;
+    border-bottom:1px solid var(--line-soft);
+    margin-bottom:28px;
+  }
+  .hero-eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:16px;
+  }
+  .hero-eyebrow .pulse{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--live);
+    box-shadow:0 0 0 0 rgba(255,77,106,0.7);
+    animation:pulse 1.6s infinite;
+  }
+  @keyframes pulse{
+    0%   { box-shadow:0 0 0 0 rgba(255,77,106,0.7); }
+    70%  { box-shadow:0 0 0 10px rgba(255,77,106,0); }
+    100% { box-shadow:0 0 0 0 rgba(255,77,106,0); }
+  }
+  h1.hero-title{
+    margin:0 0 14px;
+    font-size:48px; line-height:1.05; letter-spacing:-0.025em;
+    font-weight:700;
+    text-wrap:pretty;
+    max-width:760px;
+  }
+  h1.hero-title em{
+    font-style:normal;
+    color:var(--accent);
+  }
+  .hero-sub{
+    margin:0; font-size:16px; color:var(--text-dim);
+    max-width:620px; line-height:1.55;
+  }
+  .hero-stats{
+    margin-top:24px;
+    display:flex; gap:32px; flex-wrap:wrap;
+  }
+  .stat{
+    display:flex; flex-direction:column;
+  }
+  .stat-num{
+    font-size:22px; font-weight:600; letter-spacing:-0.01em;
+    font-family:"JetBrains Mono", monospace;
+  }
+  .stat-label{
+    font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--text-mute); margin-top:4px;
+  }
+
+  /* ─────────────── section heads ─────────────── */
+  .section-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin:0 0 16px;
+  }
+  .section-head h2{
+    margin:0;
+    font-size:20px; font-weight:600; letter-spacing:-0.01em;
+  }
+  .section-head .meta{
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--text-mute);
+  }
+  .section-head .meta a{ color:var(--accent); margin-left:12px; }
+
+  /* ─────────────── filter chips ─────────────── */
+  .chips{
+    display:flex; gap:8px; flex-wrap:wrap;
+    margin-bottom:20px;
+  }
+  .chip{
+    padding:7px 12px; border-radius:999px;
+    font-size:13px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    cursor:pointer;
+    transition:.15s;
+  }
+  .chip:hover{ color:var(--text); border-color:#34456a; }
+  .chip.is-active{
+    background:var(--accent); color:var(--accent-ink);
+    border-color:var(--accent); font-weight:600;
+  }
+
+  /* ─────────────── live now strip ─────────────── */
+  .live-now{
+    background:linear-gradient(180deg, rgba(255,77,106,0.07), rgba(255,77,106,0.01));
+    border:1px solid rgba(255,77,106,0.25);
+    border-radius:14px;
+    padding:18px 20px 20px;
+    margin-bottom:32px;
+  }
+  .live-now-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .live-tag{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--live); font-weight:500;
+  }
+  .live-tag::before{
+    content:""; width:7px; height:7px; border-radius:50%;
+    background:var(--live);
+    animation:pulse 1.6s infinite;
+  }
+  .live-grid{
+    display:grid; grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:10px;
+  }
+  .live-card{
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 16px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .live-card .clock{
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; color:var(--live); font-weight:500;
+    min-width:42px;
+  }
+  .live-card .clock .min{ font-size:14px; }
+  .live-card .teams{
+    flex:1; min-width:0;
+    display:flex; align-items:center; gap:10px;
+  }
+  .live-card .crest{
+    width:22px; height:22px; border-radius:50%;
+    background:linear-gradient(135deg, var(--surface-2), var(--surface));
+    border:1px solid var(--line);
+    display:grid; place-items:center;
+    font-size:9px; font-family:"JetBrains Mono", monospace; color:var(--text-mute);
+    flex-shrink:0;
+  }
+  .live-card .matchup{
+    font-size:13.5px; font-weight:500;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .live-card .score{
+    font-family:"JetBrains Mono", monospace;
+    font-size:14px; font-weight:600;
+    color:var(--accent);
+    margin-left:auto; padding-left:10px;
+  }
+  .live-card .net{
+    font-size:11px; color:var(--text-dim);
+    border-left:1px solid var(--line);
+    padding-left:12px;
+  }
+
+  /* ─────────────── league grid ─────────────── */
+  .league-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:14px;
+  }
+  .league-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px;
+    transition:.18s;
+    position:relative; overflow:hidden;
+    cursor:pointer;
+    color:inherit; text-decoration:none;
+    display:flex; flex-direction:column;
+  }
+  .league-card::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:var(--league-color, var(--accent));
+    opacity:0; transition:opacity .18s;
+  }
+  .league-card:hover{
+    border-color:#34456a;
+    transform:translateY(-1px);
+    box-shadow:0 12px 40px -16px rgba(0,0,0,0.6);
+  }
+  .league-card:hover::before{ opacity:1; }
+  .league-card-head{
+    display:flex; align-items:center; gap:14px;
+    margin-bottom:14px;
+  }
+  .league-crest{
+    width:46px; height:46px; border-radius:50%;
+    background:
+      radial-gradient(circle at 30% 30%, var(--league-color, var(--accent)) 0%, transparent 60%),
+      var(--surface-2);
+    border:1px solid var(--line);
+    display:grid; place-items:center;
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; font-weight:600;
+    color:var(--text);
+    letter-spacing:0.04em;
+    flex-shrink:0;
+    position:relative;
+  }
+  .league-crest::after{
+    content:""; position:absolute; inset:3px; border-radius:50%;
+    border:1px dashed rgba(255,255,255,0.08);
+  }
+  .league-meta{
+    display:flex; flex-direction:column; min-width:0; flex:1;
+  }
+  .league-name{
+    font-size:15.5px; font-weight:600; letter-spacing:-0.005em;
+  }
+  .league-region{
+    font-family:"JetBrains Mono", monospace;
+    font-size:10.5px; color:var(--text-mute);
+    text-transform:uppercase; letter-spacing:0.16em;
+    margin-top:3px;
+  }
+  .league-status{
+    font-family:"JetBrains Mono", monospace;
+    font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+    padding:4px 8px; border-radius:5px;
+    background:rgba(34,197,94,0.1); color:var(--accent);
+    border:1px solid rgba(34,197,94,0.18);
+  }
+  .league-status.off{
+    background:transparent; color:var(--text-mute);
+    border-color:var(--line);
+  }
+  .broadcast-row{
+    display:flex; flex-wrap:wrap; gap:6px;
+    padding-top:14px;
+    border-top:1px dashed var(--line-soft);
+  }
+  .broadcast-row-label{
+    font-family:"JetBrains Mono", monospace;
+    font-size:10px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--text-mute);
+    width:100%; margin-bottom:6px;
+  }
+  .net{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:500;
+    padding:5px 10px; border-radius:6px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    color:var(--text);
+  }
+  .net .swatch{
+    width:8px; height:8px; border-radius:2px;
+    background:var(--swatch, var(--text-mute));
+  }
+
+  /* ── fixtures inside league card ── */
+  .fixtures{
+    padding-top:12px;
+    border-top:1px dashed var(--line-soft);
+    display:flex; flex-direction:column;
+    gap:0;
+  }
+  .fixtures-label{
+    font-family:"JetBrains Mono", monospace;
+    font-size:10px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--text-mute);
+    margin-bottom:8px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .fixtures-label .next48{
+    color:var(--accent);
+  }
+  .fixture{
+    display:grid;
+    grid-template-columns: 56px 1fr auto;
+    gap:10px; align-items:center;
+    padding:7px 0;
+    border-bottom:1px solid var(--line-soft);
+    font-size:12.5px;
+  }
+  .fixture:last-of-type{ border-bottom:0; }
+  .fixture .when{
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; color:var(--text-dim);
+    display:flex; flex-direction:column; line-height:1.25;
+  }
+  .fixture .when .d{ color:var(--text-mute); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; }
+  .fixture .when .h{ color:var(--text); font-weight:500; }
+  .fixture.is-soon .when .h{ color:var(--accent); }
+  .fixture .pair{
+    min-width:0;
+    display:flex; align-items:center; gap:6px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .fixture .pair .x{ color:var(--text-mute); font-family:"JetBrains Mono", monospace; font-size:10px; }
+  .fixture .pair .t{ font-weight:500; }
+  .fixture .nets{ display:flex; gap:4px; }
+  .fixture .nets .mini{
+    font-size:10.5px; padding:2px 7px;
+    border-radius:4px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:"JetBrains Mono", monospace;
+    letter-spacing:.04em;
+  }
+  .fixture .nets .mini .swatch{
+    display:inline-block; width:6px; height:6px; border-radius:1px;
+    margin-right:5px; vertical-align:1px;
+    background:var(--swatch, var(--text-mute));
+  }
+
+  .league-card-foot{
+    margin-top:12px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px;
+  }
+  .more-link{
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; letter-spacing:.1em;
+    color:var(--accent);
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .more-link .arr{ transition:transform .18s; }
+  .league-card:hover .more-link .arr{ transform:translateX(3px); }
+  .more-count{
+    font-family:"JetBrains Mono", monospace;
+    font-size:10.5px; letter-spacing:.08em;
+    color:var(--text-dim);
+    padding:3px 8px; border-radius:999px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+  }
+  .more-count strong{ color:var(--accent); font-weight:600; }
+  .no-fixtures{
+    font-size:12px; color:var(--text-mute);
+    padding:8px 0; font-style:italic;
+  }
+
+  /* ─────────────── upcoming list ─────────────── */
+  .upcoming{
+    margin-top:48px;
+  }
+  .matches-list{
+    display:flex; flex-direction:column;
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    background:var(--surface);
+  }
+  .match-row{
+    display:grid;
+    grid-template-columns: 80px 1fr auto auto;
+    gap:18px; align-items:center;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line-soft);
+    transition:background .15s;
+  }
+  .match-row:last-child{ border-bottom:0; }
+  .match-row:hover{ background:var(--surface-2); }
+
+  .match-time{
+    display:flex; flex-direction:column;
+  }
+  .match-time .day{
+    font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--text-mute); font-family:"JetBrains Mono", monospace;
+  }
+  .match-time .hr{
+    font-family:"JetBrains Mono", monospace;
+    font-size:15px; font-weight:600; margin-top:2px;
+  }
+  .match-teams{
+    display:flex; align-items:center; gap:10px;
+    min-width:0;
+  }
+  .match-teams .crest{ width:22px; height:22px; }
+  .match-teams .crest{
+    width:24px; height:24px; border-radius:50%;
+    background:linear-gradient(135deg, var(--surface-2), var(--bg-2));
+    border:1px solid var(--line);
+    display:grid; place-items:center;
+    font-size:9px; font-family:"JetBrains Mono", monospace; color:var(--text-dim);
+    font-weight:600;
+    flex-shrink:0;
+  }
+  .match-teams .vs{
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    color:var(--text-mute); padding:0 4px;
+  }
+  .match-teams .team{
+    font-size:14px; font-weight:500;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .match-comp{
+    font-family:"JetBrains Mono", monospace;
+    font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--text-mute);
+    border:1px solid var(--line); border-radius:5px;
+    padding:4px 8px;
+  }
+  .match-net{
+    display:flex; gap:6px;
+  }
+  .match-net .net{ font-size:11px; padding:4px 8px; }
+
+  /* ─────────────── sidebar ─────────────── */
+  .sidebar{
+    display:flex; flex-direction:column; gap:20px;
+  }
+  .sidebar-sticky{
+    position:sticky; top:84px;
+    display:flex; flex-direction:column; gap:20px;
+  }
+  .side-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px;
+  }
+  .side-card h3{
+    margin:0 0 14px;
+    font-size:13px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--text-mute);
+    font-family:"JetBrains Mono", monospace;
+    font-weight:500;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .side-card h3 .more{ color:var(--accent); font-size:10px; }
+
+  .top-net-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 0;
+    border-bottom:1px solid var(--line-soft);
+    font-size:13px;
+  }
+  .top-net-row:last-child{ border-bottom:0; }
+  .top-net-row .l{ display:flex; align-items:center; gap:10px; }
+  .top-net-row .l .swatch{
+    width:10px; height:10px; border-radius:3px;
+    background:var(--swatch, var(--text-mute));
+  }
+  .top-net-row .r{
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; color:var(--text-mute);
+  }
+
+  /* legend reminder */
+  .legend-card .row{
+    display:flex; align-items:center; gap:10px;
+    font-size:12.5px; padding:6px 0; color:var(--text-dim);
+  }
+  .legend-card .row .swatch{ width:10px; height:10px; border-radius:2px; }
+
+  /* footer-ish */
+  footer{
+    max-width:1280px; margin:0 auto;
+    padding:32px 28px;
+    color:var(--text-mute); font-size:12px;
+    border-top:1px solid var(--line-soft);
+    display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    font-family:"JetBrains Mono", monospace;
+    letter-spacing:0.06em;
+  }
+  footer a{ color:var(--text-dim); }
+
+  /* responsive */
+  @media (max-width:1180px){
+    .page{ grid-template-columns:minmax(0,1fr) 280px; }
+    .ad-half-page{ width:100%; max-width:300px; }
+  }
+  @media (max-width:980px){
+    .page{ grid-template-columns:1fr; }
+    .league-grid{ grid-template-columns:1fr; }
+    .live-grid{ grid-template-columns:1fr; }
+    .sidebar-sticky{ position:static; }
+    .nav{ display:none; }
+    h1.hero-title{ font-size:34px; }
+    .match-row{ grid-template-columns:64px 1fr; gap:10px; }
+    .match-comp, .match-net{ grid-column:2; padding-left:0; }
+    .ad-half-page{
+      width:100%; max-width:300px; height:auto; aspect-ratio:1/2;
+    }
+  }
+  @media (max-width:560px){
+    .tz-pill{ display:none; }
+    .search kbd{ display:none; }
+    .ad-leaderboard{ height:60px; }
+    .ad-leaderboard-wrap{ padding:16px 16px 0; }
+    .page{ padding:16px 16px 60px; }
+  }
+
+  /* language toggle */
+  .lang-toggle{
+    display:inline-flex; gap:2px; padding:3px;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:8px;
+  }
+  .lang-toggle button{
+    background:transparent; border:0; cursor:pointer;
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    padding:5px 10px; color:var(--text-mute);
+    border-radius:6px; letter-spacing:0.08em; font-weight:500;
+    transition:color .15s, background .15s;
+  }
+  .lang-toggle button.active{
+    background:var(--accent); color:var(--accent-ink); font-weight:700;
+  }
+  .lang-toggle button:hover:not(.active){ color:var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ─────────────── header ─────────────── -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="logo" href="#">
+      <span class="logo-mark"><span>W</span></span>
+      <span class="logo-name">WhereToWatch <em>FC</em></span>
+    </a>
+    <nav class="nav">
+      <a href="#" class="active" data-i18n="nav.home">Hoje</a>
+      <a href="WhereToWatch FC.html" data-i18n="crumbs.allleagues">Todas as ligas</a>
+      <a href="networks/index.html" data-i18n="nav.networks">Canais</a>
+    </nav>
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <input type="text" data-i18n-attr="placeholder:search.placeholder" placeholder="Buscar competições, jogos, canais…" />
+      <kbd>⌘K</kbd>
+    </div>
+    <div class="lang-toggle" role="group" aria-label="Idioma">
+      <button data-lang-set="pt">PT</button>
+      <button data-lang-set="en">EN</button>
+    </div>
+    <div class="tz-pill"><span class="dot"></span>BRT · Seg, 27 abr</div>
+  </div>
+</header>
+
+<!-- ─────────────── ad slot 1: leaderboard ─────────────── -->
+<div class="ad-leaderboard-wrap">
+  <div class="ad ad-leaderboard">Advertisement · 728 × 90</div>
+</div>
+
+<div class="page">
+
+  <!-- ─────────────── main column ─────────────── -->
+  <main>
+
+    <section class="hero">
+      <div class="hero-eyebrow"><span class="pulse"></span><span data-lang="pt">4 jogos ao vivo · 28 hoje</span><span data-lang="en" hidden>4 matches live now · 28 today</span></div>
+      <h1 class="hero-title" data-i18n="hero.title.html">Encontre onde assistir <em>suas ligas favoritas</em>, em um só lugar.</h1>
+      <p class="hero-sub" data-i18n="hero.subtitle">Brasileirão, Champions, La Liga, Serie A, Bundesliga e mais — tudo num único guia.</p>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">9</span><span class="stat-label" data-i18n="stats.leagues">Ligas</span></div>
+        <div class="stat"><span class="stat-num">142</span><span class="stat-label" data-i18n="stat.matchesweek">Jogos esta semana</span></div>
+        <div class="stat"><span class="stat-num">11</span><span class="stat-label" data-i18n="stat.networks">Canais cobertos</span></div>
+        <div class="stat"><span class="stat-num">24/7</span><span class="stat-label" data-i18n="stats.updated">Atualizado</span></div>
+      </div>
+    </section>
+
+    <!-- live now -->
+    <section class="live-now">
+      <div class="live-now-head">
+        <span class="live-tag"><span data-lang="pt">Ao vivo agora</span><span data-lang="en" hidden>Live right now</span></span>
+        <span class="meta" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-mute);letter-spacing:.16em;text-transform:uppercase;"><span data-lang="pt">4 jogos</span><span data-lang="en" hidden>4 matches</span></span>
+      </div>
+      <div class="live-grid">
+        <div class="live-card">
+          <div class="clock"><div class="min">67'</div></div>
+          <div class="teams">
+            <span class="crest">FLA</span>
+            <span class="matchup">Flamengo × Fluminense</span>
+            <span class="crest">FLU</span>
+          </div>
+          <span class="score">2 – 1</span>
+          <span class="net">Globo</span>
+        </div>
+        <div class="live-card">
+          <div class="clock"><div class="min">34'</div></div>
+          <div class="teams">
+            <span class="crest">ATA</span>
+            <span class="matchup">Atalanta × Cagliari</span>
+            <span class="crest">CAG</span>
+          </div>
+          <span class="score">1 – 0</span>
+          <span class="net">CazéTV</span>
+        </div>
+        <div class="live-card">
+          <div class="clock"><div class="min">HT</div></div>
+          <div class="teams">
+            <span class="crest">RMA</span>
+            <span class="matchup">Real Madrid × Sevilla</span>
+            <span class="crest">SEV</span>
+          </div>
+          <span class="score">0 – 0</span>
+          <span class="net">Disney+</span>
+        </div>
+        <div class="live-card">
+          <div class="clock"><div class="min">82'</div></div>
+          <div class="teams">
+            <span class="crest">LEV</span>
+            <span class="matchup">Leverkusen × Stuttgart</span>
+            <span class="crest">STU</span>
+          </div>
+          <span class="score">3 – 2</span>
+          <span class="net">OneFootball</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- competitions -->
+    <div class="section-head">
+      <h2><span data-lang="pt">Competições</span><span data-lang="en" hidden>Competitions</span></h2>
+      <span class="meta"><span data-lang="pt">9 ligas</span><span data-lang="en" hidden>9 leagues</span><a href="#"><span data-lang="pt">Ver todas →</span><span data-lang="en" hidden>View all →</span></a></span>
+    </div>
+    <div class="chips">
+      <button class="chip is-active"><span data-lang="pt">Todas</span><span data-lang="en" hidden>All</span></button>
+      <button class="chip"><span data-lang="pt">América do Sul</span><span data-lang="en" hidden>South America</span></button>
+      <button class="chip"><span data-lang="pt">Europa</span><span data-lang="en" hidden>Europe</span></button>
+      <button class="chip"><span data-lang="pt">Nacionais</span><span data-lang="en" hidden>Domestic</span></button>
+      <button class="chip"><span data-lang="pt">Copas</span><span data-lang="en" hidden>Cups</span></button>
+      <button class="chip"><span data-lang="pt">TV aberta</span><span data-lang="en" hidden>Free-to-air</span></button>
+    </div>
+
+    <div class="league-grid">
+
+      <!-- 1. Brasileirão -->
+      <a class="league-card" href="leagues/brasileirao.html" style="--league-color:#f7c52b;">
+        <div class="league-card-head">
+          <div class="league-crest">CBF</div>
+          <div class="league-meta">
+            <span class="league-name">Campeonato Brasileiro</span>
+            <span class="league-region"><span data-lang="pt">Brasil · Série A</span><span data-lang="en" hidden>Brazil · Série A</span></span>
+          </div>
+          <span class="league-status"><span data-lang="pt">Em curso</span><span data-lang="en" hidden>In season</span></span>
+        </div>
+        <div class="fixtures">
+          <div class="fixtures-label"><span><span data-lang="pt">Próximos jogos</span><span data-lang="en" hidden>Next fixtures</span></span><span class="next48"><span data-lang="pt">Em 48h</span><span data-lang="en" hidden>Within 48h</span></span></div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tonight</span><span class="h">21:30</span></div>
+            <div class="pair"><span class="t">Flamengo</span><span class="x">×</span><span class="t">Fluminense</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#0a4cdc"></span>Globo</span><span class="mini"><span class="swatch" style="--swatch:#ff0033"></span>Premiere</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tue 28</span><span class="h">19:00</span></div>
+            <div class="pair"><span class="t">Palmeiras</span><span class="x">×</span><span class="t">Botafogo</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#00a8e1"></span>Prime</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tue 28</span><span class="h">21:30</span></div>
+            <div class="pair"><span class="t">Cruzeiro</span><span class="x">×</span><span class="t">Internacional</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ff0033"></span>Premiere</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Wed 29</span><span class="h">16:00</span></div>
+            <div class="pair"><span class="t">São Paulo</span><span class="x">×</span><span class="t">Bahia</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#c6ff3d"></span>CazéTV</span></div>
+          </div>
+        </div>
+        <div class="league-card-foot">
+          <span class="more-count"><strong>+6</strong> more this week</span>
+          <span class="more-link"><span data-lang="pt">Ver competição</span><span data-lang="en" hidden>View competition</span> <span class="arr">→</span></span>
+        </div>
+      </a>
+
+      <!-- 2. Copa do Brasil -->
+      <a class="league-card" href="leagues/copa-do-brasil.html" style="--league-color:#36d399;">
+        <div class="league-card-head">
+          <div class="league-crest">CDB</div>
+          <div class="league-meta">
+            <span class="league-name">Copa do Brasil</span>
+            <span class="league-region"><span data-lang="pt">Brasil · Copa nacional</span><span data-lang="en" hidden>Brazil · Knockout cup</span></span>
+          </div>
+          <span class="league-status"><span data-lang="pt">Oitavas</span><span data-lang="en" hidden>Round of 16</span></span>
+        </div>
+        <div class="fixtures">
+          <div class="fixtures-label"><span><span data-lang="pt">Próximos jogos</span><span data-lang="en" hidden>Next fixtures</span></span><span class="next48"><span data-lang="pt">Em 48h</span><span data-lang="en" hidden>Within 48h</span></span></div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tue 28</span><span class="h">21:30</span></div>
+            <div class="pair"><span class="t">Corinthians</span><span class="x">×</span><span class="t">Vasco</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#0a4cdc"></span>Globo</span><span class="mini"><span class="swatch" style="--swatch:#00a8e1"></span>Prime</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Wed 29</span><span class="h">19:30</span></div>
+            <div class="pair"><span class="t">Palmeiras</span><span class="x">×</span><span class="t">CRB</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#00a8e1"></span>Prime</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Wed 29</span><span class="h">21:30</span></div>
+            <div class="pair"><span class="t">Athletico-PR</span><span class="x">×</span><span class="t">Bragantino</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ff0033"></span>SporTV</span></div>
+          </div>
+        </div>
+        <div class="league-card-foot">
+          <span class="more-count"><strong>+5</strong> more this week</span>
+          <span class="more-link"><span data-lang="pt">Ver competição</span><span data-lang="en" hidden>View competition</span> <span class="arr">→</span></span>
+        </div>
+      </a>
+
+      <!-- 3. Sulamericana -->
+      <a class="league-card" href="leagues/sulamericana.html" style="--league-color:#ff7a59;">
+        <div class="league-card-head">
+          <div class="league-crest">CSA</div>
+          <div class="league-meta">
+            <span class="league-name">Copa Sulamericana</span>
+            <span class="league-region"><span data-lang="pt">CONMEBOL · Continental</span><span data-lang="en" hidden>CONMEBOL · Continental</span></span>
+          </div>
+          <span class="league-status"><span data-lang="pt">Fase de grupos</span><span data-lang="en" hidden>Group stage</span></span>
+        </div>
+        <div class="fixtures">
+          <div class="fixtures-label"><span><span data-lang="pt">Próximos jogos</span><span data-lang="en" hidden>Next fixtures</span></span><span class="next48"><span data-lang="pt">Em 48h</span><span data-lang="en" hidden>Within 48h</span></span></div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tue 28</span><span class="h">19:00</span></div>
+            <div class="pair"><span class="t">Atlético-MG</span><span class="x">×</span><span class="t">Caracas</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ffb547"></span>ESPN</span><span class="mini"><span class="swatch" style="--swatch:#003cff"></span>Disney+</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tue 28</span><span class="h">21:30</span></div>
+            <div class="pair"><span class="t">São Paulo</span><span class="x">×</span><span class="t">LDU Quito</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ffb547"></span>ESPN</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Wed 29</span><span class="h">19:00</span></div>
+            <div class="pair"><span class="t">Fortaleza</span><span class="x">×</span><span class="t">Racing</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#003cff"></span>Disney+</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Wed 29</span><span class="h">21:30</span></div>
+            <div class="pair"><span class="t">Grêmio</span><span class="x">×</span><span class="t">Defensa</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#c6ff3d"></span>Paramount+</span></div>
+          </div>
+        </div>
+        <div class="league-card-foot">
+          <span class="more-count"><strong>+4</strong> more this week</span>
+          <span class="more-link"><span data-lang="pt">Ver competição</span><span data-lang="en" hidden>View competition</span> <span class="arr">→</span></span>
+        </div>
+      </a>
+
+      <!-- 4. La Liga -->
+      <a class="league-card" href="leagues/la-liga.html" style="--league-color:#ff2b56;">
+        <div class="league-card-head">
+          <div class="league-crest">LFP</div>
+          <div class="league-meta">
+            <span class="league-name">La Liga</span>
+            <span class="league-region"><span data-lang="pt">Espanha · 1ª divisão</span><span data-lang="en" hidden>Spain · Top flight</span></span>
+          </div>
+          <span class="league-status"><span data-lang="pt">Rodada 34</span><span data-lang="en" hidden>Matchday 34</span></span>
+        </div>
+        <div class="fixtures">
+          <div class="fixtures-label"><span><span data-lang="pt">Próximos jogos</span><span data-lang="en" hidden>Next fixtures</span></span><span class="next48"><span data-lang="pt">Em 48h</span><span data-lang="en" hidden>Within 48h</span></span></div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tonight</span><span class="h">16:30</span></div>
+            <div class="pair"><span class="t">Real Madrid</span><span class="x">×</span><span class="t">Sevilla</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ffb547"></span>ESPN</span><span class="mini"><span class="swatch" style="--swatch:#003cff"></span>Disney+</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tue 28</span><span class="h">14:00</span></div>
+            <div class="pair"><span class="t">Villarreal</span><span class="x">×</span><span class="t">Getafe</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#003cff"></span>Disney+</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tue 28</span><span class="h">16:30</span></div>
+            <div class="pair"><span class="t">Athletic Club</span><span class="x">×</span><span class="t">Valencia</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ffb547"></span>ESPN</span></div>
+          </div>
+        </div>
+        <div class="league-card-foot">
+          <span class="more-count"><strong>+7</strong> more this week</span>
+          <span class="more-link"><span data-lang="pt">Ver competição</span><span data-lang="en" hidden>View competition</span> <span class="arr">→</span></span>
+        </div>
+      </a>
+
+      <!-- 5. Champions League -->
+      <a class="league-card" href="leagues/champions-league.html" style="--league-color:#3a86ff;">
+        <div class="league-card-head">
+          <div class="league-crest">UCL</div>
+          <div class="league-meta">
+            <span class="league-name">Champions League</span>
+            <span class="league-region"><span data-lang="pt">UEFA · Continental</span><span data-lang="en" hidden>UEFA · Continental</span></span>
+          </div>
+          <span class="league-status"><span data-lang="pt">Semifinais</span><span data-lang="en" hidden>Semi-finals</span></span>
+        </div>
+        <div class="fixtures">
+          <div class="fixtures-label"><span><span data-lang="pt">Próximos jogos</span><span data-lang="en" hidden>Next fixtures</span></span><span class="next48"><span data-lang="pt">Em 48h</span><span data-lang="en" hidden>Within 48h</span></span></div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tue 28</span><span class="h">16:00</span></div>
+            <div class="pair"><span class="t">PSG</span><span class="x">×</span><span class="t">Arsenal</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ffb547"></span>TNT</span><span class="mini"><span class="swatch" style="--swatch:#c6ff3d"></span>Max</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Wed 29</span><span class="h">16:00</span></div>
+            <div class="pair"><span class="t">Barcelona</span><span class="x">×</span><span class="t">Inter</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ff0033"></span>SBT</span><span class="mini"><span class="swatch" style="--swatch:#0a4cdc"></span>Space</span><span class="mini"><span class="swatch" style="--swatch:#c6ff3d"></span>Max</span></div>
+          </div>
+        </div>
+        <div class="league-card-foot">
+          <span class="more-count">SF 1st leg only</span>
+          <span class="more-link"><span data-lang="pt">Ver competição</span><span data-lang="en" hidden>View competition</span> <span class="arr">→</span></span>
+        </div>
+      </a>
+
+      <!-- 6. Serie A -->
+      <a class="league-card" href="leagues/serie-a.html" style="--league-color:#0a8e3a;">
+        <div class="league-card-head">
+          <div class="league-crest">LSA</div>
+          <div class="league-meta">
+            <span class="league-name">Serie A</span>
+            <span class="league-region"><span data-lang="pt">Itália · 1ª divisão</span><span data-lang="en" hidden>Italy · Top flight</span></span>
+          </div>
+          <span class="league-status"><span data-lang="pt">Rodada 34</span><span data-lang="en" hidden>Matchday 34</span></span>
+        </div>
+        <div class="fixtures">
+          <div class="fixtures-label"><span><span data-lang="pt">Próximos jogos</span><span data-lang="en" hidden>Next fixtures</span></span><span class="next48"><span data-lang="pt">Em 48h</span><span data-lang="en" hidden>Within 48h</span></span></div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tonight</span><span class="h">15:00</span></div>
+            <div class="pair"><span class="t">Atalanta</span><span class="x">×</span><span class="t">Cagliari</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#c6ff3d"></span>CazéTV</span></div>
+          </div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tue 28</span><span class="h">15:45</span></div>
+            <div class="pair"><span class="t">Napoli</span><span class="x">×</span><span class="t">Bologna</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ff6a00"></span>OneFootball</span></div>
+          </div>
+        </div>
+        <div class="league-card-foot">
+          <span class="more-count"><strong>+8</strong> more this week</span>
+          <span class="more-link"><span data-lang="pt">Ver competição</span><span data-lang="en" hidden>View competition</span> <span class="arr">→</span></span>
+        </div>
+      </a>
+
+      <!-- 7. Bundesliga -->
+      <a class="league-card" href="leagues/bundesliga.html" style="--league-color:#d22020;">
+        <div class="league-card-head">
+          <div class="league-crest">BUN</div>
+          <div class="league-meta">
+            <span class="league-name">Bundesliga</span>
+            <span class="league-region"><span data-lang="pt">Alemanha · 1ª divisão</span><span data-lang="en" hidden>Germany · Top flight</span></span>
+          </div>
+          <span class="league-status"><span data-lang="pt">Rodada 31</span><span data-lang="en" hidden>Matchday 31</span></span>
+        </div>
+        <div class="fixtures">
+          <div class="fixtures-label"><span><span data-lang="pt">Próximos jogos</span><span data-lang="en" hidden>Next fixtures</span></span><span class="next48"><span data-lang="pt">Em 48h</span><span data-lang="en" hidden>Within 48h</span></span></div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tonight</span><span class="h">15:30</span></div>
+            <div class="pair"><span class="t">Leverkusen</span><span class="x">×</span><span class="t">Stuttgart</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ff6a00"></span>OneFootball</span></div>
+          </div>
+        </div>
+        <div class="league-card-foot">
+          <span class="more-count">No more in 48h</span>
+          <span class="more-link"><span data-lang="pt">Ver competição</span><span data-lang="en" hidden>View competition</span> <span class="arr">→</span></span>
+        </div>
+      </a>
+
+      <!-- 8. Ligue 1 -->
+      <a class="league-card" href="leagues/ligue-1.html" style="--league-color:#9b5dff;">
+        <div class="league-card-head">
+          <div class="league-crest">LFP</div>
+          <div class="league-meta">
+            <span class="league-name">Ligue 1</span>
+            <span class="league-region"><span data-lang="pt">França · 1ª divisão</span><span data-lang="en" hidden>France · Top flight</span></span>
+          </div>
+          <span class="league-status"><span data-lang="pt">Rodada 32</span><span data-lang="en" hidden>Matchday 32</span></span>
+        </div>
+        <div class="fixtures">
+          <div class="fixtures-label"><span><span data-lang="pt">Próximos jogos</span><span data-lang="en" hidden>Next fixtures</span></span><span class="next48"><span data-lang="pt">Em 48h</span><span data-lang="en" hidden>Within 48h</span></span></div>
+          <div class="no-fixtures">No matches scheduled in the next 48 hours.</div>
+        </div>
+        <div class="league-card-foot">
+          <span class="more-count">Resumes Fri 01</span>
+          <span class="more-link"><span data-lang="pt">Ver competição</span><span data-lang="en" hidden>View competition</span> <span class="arr">→</span></span>
+        </div>
+      </a>
+
+      <!-- 9. Primeira Liga -->
+      <a class="league-card" href="leagues/primeira-liga.html" style="--league-color:#f25c5c;">
+        <div class="league-card-head">
+          <div class="league-crest">LPF</div>
+          <div class="league-meta">
+            <span class="league-name">Primeira Liga</span>
+            <span class="league-region"><span data-lang="pt">Portugal · 1ª divisão</span><span data-lang="en" hidden>Portugal · Top flight</span></span>
+          </div>
+          <span class="league-status"><span data-lang="pt">Rodada 31</span><span data-lang="en" hidden>Matchday 31</span></span>
+        </div>
+        <div class="fixtures">
+          <div class="fixtures-label"><span><span data-lang="pt">Próximos jogos</span><span data-lang="en" hidden>Next fixtures</span></span><span class="next48"><span data-lang="pt">Em 48h</span><span data-lang="en" hidden>Within 48h</span></span></div>
+          <div class="fixture is-soon">
+            <div class="when"><span class="d">Tue 28</span><span class="h">16:30</span></div>
+            <div class="pair"><span class="t">Porto</span><span class="x">×</span><span class="t">Braga</span></div>
+            <div class="nets"><span class="mini"><span class="swatch" style="--swatch:#ffb547"></span>ESPN</span><span class="mini"><span class="swatch" style="--swatch:#003cff"></span>Disney+</span></div>
+          </div>
+        </div>
+        <div class="league-card-foot">
+          <span class="more-count">No more in 48h</span>
+          <span class="more-link"><span data-lang="pt">Ver competição</span><span data-lang="en" hidden>View competition</span> <span class="arr">→</span></span>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- upcoming list -->
+    <section class="upcoming">
+      <div class="section-head">
+        <h2><span data-lang="pt">Jogos da semana</span><span data-lang="en" hidden>This week's matches</span></h2>
+        <span class="meta"><span data-lang="pt">Horários em BRT</span><span data-lang="en" hidden>All times BRT</span><a href="#"><span data-lang="pt">Programação completa →</span><span data-lang="en" hidden>Full schedule →</span></a></span>
+      </div>
+
+      <div class="matches-list">
+        <div class="match-row">
+          <div class="match-time"><span class="day">Tue 28</span><span class="hr">16:00</span></div>
+          <div class="match-teams">
+            <span class="crest">PSG</span>
+            <span class="team">Paris Saint-Germain</span>
+            <span class="vs">vs</span>
+            <span class="team">Arsenal</span>
+            <span class="crest">ARS</span>
+          </div>
+          <span class="match-comp">UCL · SF 1st leg</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#ffb547"></span>TNT</span>
+            <span class="net"><span class="swatch" style="--swatch:#c6ff3d"></span>Max</span>
+          </div>
+        </div>
+
+        <div class="match-row">
+          <div class="match-time"><span class="day">Tue 28</span><span class="hr">21:30</span></div>
+          <div class="match-teams">
+            <span class="crest">SAO</span>
+            <span class="team">São Paulo</span>
+            <span class="vs">vs</span>
+            <span class="team">LDU Quito</span>
+            <span class="crest">LDU</span>
+          </div>
+          <span class="match-comp">Sulamericana · Group F</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#ffb547"></span>ESPN</span>
+            <span class="net"><span class="swatch" style="--swatch:#003cff"></span>Disney+</span>
+          </div>
+        </div>
+
+        <div class="match-row">
+          <div class="match-time"><span class="day">Wed 29</span><span class="hr">16:00</span></div>
+          <div class="match-teams">
+            <span class="crest">BAR</span>
+            <span class="team">Barcelona</span>
+            <span class="vs">vs</span>
+            <span class="team">Inter Milan</span>
+            <span class="crest">INT</span>
+          </div>
+          <span class="match-comp">UCL · SF 1st leg</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#ff0033"></span>SBT</span>
+            <span class="net"><span class="swatch" style="--swatch:#0a4cdc"></span>Space</span>
+            <span class="net"><span class="swatch" style="--swatch:#c6ff3d"></span>Max</span>
+          </div>
+        </div>
+
+        <div class="match-row">
+          <div class="match-time"><span class="day">Wed 29</span><span class="hr">21:30</span></div>
+          <div class="match-teams">
+            <span class="crest">PAL</span>
+            <span class="team">Palmeiras</span>
+            <span class="vs">vs</span>
+            <span class="team">CRB</span>
+            <span class="crest">CRB</span>
+          </div>
+          <span class="match-comp">Copa do Brasil · R16</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#0a4cdc"></span>Globo</span>
+            <span class="net"><span class="swatch" style="--swatch:#00a8e1"></span>Prime Video</span>
+          </div>
+        </div>
+
+        <div class="match-row">
+          <div class="match-time"><span class="day">Thu 30</span><span class="hr">15:30</span></div>
+          <div class="match-teams">
+            <span class="crest">JUV</span>
+            <span class="team">Juventus</span>
+            <span class="vs">vs</span>
+            <span class="team">Lazio</span>
+            <span class="crest">LAZ</span>
+          </div>
+          <span class="match-comp">Serie A · MD 34</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#c6ff3d"></span>CazéTV</span>
+          </div>
+        </div>
+
+        <div class="match-row">
+          <div class="match-time"><span class="day">Fri 01</span><span class="hr">16:30</span></div>
+          <div class="match-teams">
+            <span class="crest">DOR</span>
+            <span class="team">Dortmund</span>
+            <span class="vs">vs</span>
+            <span class="team">Bayern</span>
+            <span class="crest">BAY</span>
+          </div>
+          <span class="match-comp">Bundesliga · MD 31</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#ff6a00"></span>OneFootball</span>
+          </div>
+        </div>
+
+        <div class="match-row">
+          <div class="match-time"><span class="day">Sat 02</span><span class="hr">12:30</span></div>
+          <div class="match-teams">
+            <span class="crest">ATM</span>
+            <span class="team">Atlético Madrid</span>
+            <span class="vs">vs</span>
+            <span class="team">Real Sociedad</span>
+            <span class="crest">RSO</span>
+          </div>
+          <span class="match-comp">La Liga · MD 34</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#ffb547"></span>ESPN</span>
+            <span class="net"><span class="swatch" style="--swatch:#003cff"></span>Disney+</span>
+          </div>
+        </div>
+
+        <div class="match-row">
+          <div class="match-time"><span class="day">Sat 02</span><span class="hr">16:00</span></div>
+          <div class="match-teams">
+            <span class="crest">MAR</span>
+            <span class="team">Marseille</span>
+            <span class="vs">vs</span>
+            <span class="team">Lyon</span>
+            <span class="crest">LYO</span>
+          </div>
+          <span class="match-comp">Ligue 1 · MD 32</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#c6ff3d"></span>CazéTV</span>
+            <span class="net"><span class="swatch" style="--swatch:#ff6a00"></span>Xsports</span>
+          </div>
+        </div>
+
+        <div class="match-row">
+          <div class="match-time"><span class="day">Sat 02</span><span class="hr">17:30</span></div>
+          <div class="match-teams">
+            <span class="crest">SPO</span>
+            <span class="team">Sporting CP</span>
+            <span class="vs">vs</span>
+            <span class="team">Benfica</span>
+            <span class="crest">BEN</span>
+          </div>
+          <span class="match-comp">Primeira Liga · MD 31</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#ffb547"></span>ESPN</span>
+            <span class="net"><span class="swatch" style="--swatch:#003cff"></span>Disney+</span>
+          </div>
+        </div>
+
+        <div class="match-row">
+          <div class="match-time"><span class="day">Sun 03</span><span class="hr">16:00</span></div>
+          <div class="match-teams">
+            <span class="crest">FLA</span>
+            <span class="team">Flamengo</span>
+            <span class="vs">vs</span>
+            <span class="team">Corinthians</span>
+            <span class="crest">COR</span>
+          </div>
+          <span class="match-comp">Brasileirão · MD 5</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#0a4cdc"></span>Globo</span>
+            <span class="net"><span class="swatch" style="--swatch:#ff0033"></span>Premiere</span>
+          </div>
+        </div>
+
+        <div class="match-row">
+          <div class="match-time"><span class="day">Sun 03</span><span class="hr">10:00</span></div>
+          <div class="match-teams">
+            <span class="crest">MIL</span>
+            <span class="team">Milan</span>
+            <span class="vs">vs</span>
+            <span class="team">Roma</span>
+            <span class="crest">ROM</span>
+          </div>
+          <span class="match-comp">Serie A · MD 34</span>
+          <div class="match-net">
+            <span class="net"><span class="swatch" style="--swatch:#c6ff3d"></span>CazéTV</span>
+            <span class="net"><span class="swatch" style="--swatch:#ff6a00"></span>OneFootball</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─────────────── sidebar ─────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-sticky">
+
+      <!-- ad slot 2: half-page sticky -->
+      <div class="ad ad-half-page">Advertisement · 300 × 600</div>
+
+      <div class="side-card">
+        <h3><span data-i18n="sidebar.topnetworks">Principais canais</span> <a href="networks/index.html" class="more" data-i18n="sidebar.topnetworks.more">Todos →</a></h3>
+        <div class="top-net-row">
+          <div class="l"><span class="swatch" style="--swatch:#0a4cdc"></span>Globo</div>
+          <div class="r"><span class="cnt">38</span> <span data-i18n="sidebar.jogos">jogos</span></div>
+        </div>
+        <div class="top-net-row">
+          <div class="l"><span class="swatch" style="--swatch:#c6ff3d"></span>CazéTV</div>
+          <div class="r"><span class="cnt">24</span> <span data-i18n="sidebar.jogos">jogos</span></div>
+        </div>
+        <div class="top-net-row">
+          <div class="l"><span class="swatch" style="--swatch:#ffb547"></span>ESPN</div>
+          <div class="r"><span class="cnt">22</span> <span data-i18n="sidebar.jogos">jogos</span></div>
+        </div>
+        <div class="top-net-row">
+          <div class="l"><span class="swatch" style="--swatch:#003cff"></span>Disney+</div>
+          <div class="r"><span class="cnt">22</span> <span data-i18n="sidebar.jogos">jogos</span></div>
+        </div>
+        <div class="top-net-row">
+          <div class="l"><span class="swatch" style="--swatch:#00a8e1"></span>Prime Video</div>
+          <div class="r"><span class="cnt">14</span> <span data-i18n="sidebar.jogos">jogos</span></div>
+        </div>
+        <div class="top-net-row">
+          <div class="l"><span class="swatch" style="--swatch:#ff0033"></span>Premiere</div>
+          <div class="r"><span class="cnt">12</span> <span data-i18n="sidebar.jogos">jogos</span></div>
+        </div>
+      </div>
+
+      <div class="side-card legend-card">
+        <h3 data-i18n="sidebar.legend">Legenda</h3>
+        <div class="row"><span class="swatch" style="background:var(--accent)"></span><span data-i18n="sidebar.legend.fta">Aberto / streaming gratuito</span></div>
+        <div class="row"><span class="swatch" style="background:var(--live)"></span><span data-i18n="sidebar.legend.live">Ao vivo agora</span></div>
+        <div class="row"><span class="swatch" style="background:var(--text-mute)"></span><span data-i18n="sidebar.legend.ppv">Pay-per-view</span></div>
+      </div>
+
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span data-i18n="footer.tagline">© 2026 WhereToWatch FC · Guia independente de transmissões</span>
+  <span><a href="about.html" data-i18n="footer.about">Sobre</a> · <a href="networks/index.html" data-i18n="footer.networks">Canais</a> · <a href="privacy.html" data-i18n="footer.privacy">Privacidade</a> · <a href="contact.html" data-i18n="footer.contact">Contato</a></span>
+</footer>
+
+<script src="i18n.js"></script>
+<script>
+  I18N.apply();
+  // Translate static day labels and stage labels in the upcoming-matches list
+  document.querySelectorAll('.match-time .day').forEach(el => {
+    const en = el.dataset.dayEn || el.textContent.trim();
+    el.dataset.dayEn = en;
+    el.textContent = I18N.day(en);
+  });
+  document.querySelectorAll('.match-comp').forEach(el => {
+    const en = el.dataset.compEn || el.textContent.trim();
+    el.dataset.compEn = en;
+    // format is "Prefix · Stage" — translate the stage portion
+    const parts = en.split(' · ');
+    if (parts.length >= 2) {
+      const head = parts[0];
+      const tail = parts.slice(1).join(' · ');
+      el.textContent = head + ' · ' + I18N.stage(tail);
+    } else {
+      el.textContent = I18N.stage(en);
+    }
+  });
+</script>
+
+</body>
+</html>

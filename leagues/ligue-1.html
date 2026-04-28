@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>League · WhereToWatch FC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0d1410; --bg-2:#111a14; --surface:#15211a; --surface-2:#1c2c23;
+    --line:#243b30; --line-soft:#1a2820;
+    --text:#e7ecf5; --text-dim:#9aa6bd; --text-mute:#65718a;
+    --accent:#22c55e; --accent-ink:#0a1410; --live:#ff4d6a;
+    --league-color:#22c55e;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"Space Grotesk", system-ui, sans-serif;
+    background:
+      radial-gradient(1100px 500px at 90% -10%, color-mix(in oklab, var(--league-color) 16%, transparent), transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, rgba(80,140,255,0.05), transparent 60%),
+      var(--bg);
+    color:var(--text); -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; text-decoration:none; }
+
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    backdrop-filter:saturate(140%) blur(10px);
+    background:rgba(13,20,16,0.78);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .topbar-inner{ max-width:1280px; margin:0 auto; padding:14px 28px; display:flex; align-items:center; gap:24px; }
+  .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; }
+  .logo-mark{
+    width:32px; height:32px; border-radius:9px;
+    background:var(--accent); color:var(--accent-ink);
+    display:grid; place-items:center; font-weight:700; font-size:14px;
+    box-shadow:0 0 0 1px rgba(34,197,94,0.4), 0 8px 24px -10px rgba(34,197,94,0.55);
+  }
+  .logo-name em{ font-style:normal; color:var(--accent); }
+  .crumbs{
+    font-family:"JetBrains Mono", monospace; font-size:12px;
+    color:var(--text-mute); margin-left:8px;
+  }
+  .crumbs a{ color:var(--text-dim); }
+  .crumbs a:hover{ color:var(--accent); }
+  .crumbs .sep{ margin:0 8px; }
+  .tz-pill{
+    margin-left:auto;
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:"JetBrains Mono", monospace; font-size:12px; color:var(--text-dim);
+    background:var(--surface); border:1px solid var(--line);
+    padding:8px 10px; border-radius:8px;
+  }
+  .tz-pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); }
+
+  /* Ad slot */
+  .ad{
+    background:#1a2820; border:2px dashed #5a6a60;
+    border-radius:12px; outline:1px solid rgba(34,197,94,0.08);
+    color:#aab5ad;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"JetBrains Mono", monospace;
+    font-size:13px; letter-spacing:0.18em; text-transform:uppercase;
+    position:relative;
+  }
+  .ad::before{
+    content:"Advertisement"; position:absolute; top:8px; left:12px;
+    font-size:11px; letter-spacing:0.2em; color:#9aa6a0;
+  }
+  .ad-leaderboard{ width:100%; max-width:728px; height:90px; margin:0 auto; }
+  .ad-leaderboard-wrap{ padding:20px 28px 0; max-width:1280px; margin:0 auto; }
+  .ad-half-page{ width:300px; height:600px; margin:0 auto; }
+  .ad-inline{ width:100%; max-width:970px; height:120px; margin:24px auto; }
+
+  .page{
+    max-width:1280px; margin:0 auto;
+    padding:24px 28px 80px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 320px;
+    gap:32px;
+  }
+
+  /* Hero */
+  .league-hero{
+    display:flex; align-items:center; gap:22px;
+    padding:32px 0 28px;
+    border-bottom:1px solid var(--line-soft);
+    margin-bottom:28px;
+  }
+  .league-crest-xl{
+    width:96px; height:96px; border-radius:50%;
+    background:
+      radial-gradient(circle at 30% 30%, var(--league-color) 0%, transparent 60%),
+      var(--surface-2);
+    border:1px solid var(--line);
+    display:grid; place-items:center;
+    font-family:"JetBrains Mono", monospace;
+    font-size:20px; font-weight:600;
+    flex-shrink:0; position:relative;
+  }
+  .league-crest-xl::after{
+    content:""; position:absolute; inset:6px; border-radius:50%;
+    border:1px dashed rgba(255,255,255,0.08);
+  }
+  .league-hero-meta .eyebrow{
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    letter-spacing:.2em; text-transform:uppercase;
+    color:var(--league-color); margin-bottom:8px;
+  }
+  .league-hero-meta h1{
+    margin:0 0 8px; font-size:42px; line-height:1.05; letter-spacing:-.025em; font-weight:700;
+  }
+  .league-hero-meta p{ margin:0; color:var(--text-dim); font-size:15px; max-width:560px; line-height:1.55; }
+  .league-stats{ margin-top:14px; display:flex; gap:24px; flex-wrap:wrap; }
+  .league-stats .stat{ display:flex; flex-direction:column; }
+  .league-stats .stat-num{ font-family:"JetBrains Mono", monospace; font-size:18px; font-weight:600; }
+  .league-stats .stat-label{ font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-mute); margin-top:3px; }
+
+  /* Section heads */
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; margin:0 0 14px; }
+  .section-head h2{ margin:0; font-size:18px; font-weight:600; letter-spacing:-.01em; }
+  .section-head .meta{ font-family:"JetBrains Mono", monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-mute); }
+
+  /* Network strip */
+  .nets-strip{
+    display:flex; flex-wrap:wrap; gap:8px;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:12px; padding:14px 16px;
+    margin-bottom:32px;
+  }
+  .nets-strip-label{
+    font-family:"JetBrains Mono", monospace; font-size:10px;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--text-mute);
+    width:100%; margin-bottom:4px;
+  }
+  .net{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:13px; font-weight:500;
+    padding:6px 11px; border-radius:7px;
+    background:var(--surface-2); border:1px solid var(--line);
+  }
+  .net .swatch{ width:9px; height:9px; border-radius:2px; background:var(--swatch, var(--text-mute)); }
+
+  /* Matches table */
+  .matches{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; overflow:hidden;
+  }
+  .match-row{
+    display:grid;
+    grid-template-columns: 92px 1fr auto auto;
+    gap:18px; align-items:center;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line-soft);
+    transition:background .15s;
+  }
+  .match-row:last-child{ border-bottom:0; }
+  .match-row:hover{ background:var(--surface-2); }
+  .match-row.is-live{ background:linear-gradient(180deg, rgba(255,77,106,.07), transparent); }
+  .match-time{ display:flex; flex-direction:column; }
+  .match-time .day{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-mute); font-family:"JetBrains Mono", monospace; }
+  .match-time .hr{ font-family:"JetBrains Mono", monospace; font-size:15px; font-weight:600; margin-top:2px; }
+  .match-time .live{ color:var(--live); font-family:"JetBrains Mono", monospace; font-weight:600; display:inline-flex; align-items:center; gap:6px; }
+  .match-time .live::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--live); animation:pulse 1.6s infinite; }
+  @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(255,77,106,.7)} 70%{box-shadow:0 0 0 8px rgba(255,77,106,0)} 100%{box-shadow:0 0 0 0 rgba(255,77,106,0)} }
+  .match-teams{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .match-teams .crest{
+    width:24px; height:24px; border-radius:50%;
+    background:linear-gradient(135deg, var(--surface-2), var(--bg-2));
+    border:1px solid var(--line);
+    display:grid; place-items:center;
+    font-size:9px; font-family:"JetBrains Mono", monospace; color:var(--text-dim);
+    font-weight:600; flex-shrink:0;
+  }
+  .match-teams .vs{ font-family:"JetBrains Mono", monospace; font-size:11px; color:var(--text-mute); padding:0 4px; }
+  .match-teams .team{ font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .match-teams .score{ font-family:"JetBrains Mono", monospace; font-size:14px; font-weight:600; color:var(--accent); padding:0 8px; }
+  .match-stage{ font-family:"JetBrains Mono", monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-mute); border:1px solid var(--line); border-radius:5px; padding:4px 8px; }
+  .match-net{ display:flex; gap:6px; }
+  .match-net .net{ font-size:11px; padding:4px 8px; }
+
+  .day-divider{
+    padding:12px 18px;
+    background:var(--bg-2);
+    border-bottom:1px solid var(--line-soft);
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--text-dim);
+  }
+  .day-divider strong{ color:var(--text); font-weight:600; }
+  .day-divider .count{ color:var(--text-mute); }
+
+  /* Sidebar */
+  .sidebar{ display:flex; flex-direction:column; gap:20px; }
+  .sidebar-sticky{ position:sticky; top:84px; display:flex; flex-direction:column; gap:20px; }
+  .side-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .side-card h3{
+    margin:0 0 14px; font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--text-mute); font-family:"JetBrains Mono", monospace; font-weight:500;
+  }
+  .table-row{
+    display:grid; grid-template-columns: 22px 1fr auto auto;
+    gap:10px; align-items:center; padding:8px 0;
+    border-bottom:1px solid var(--line-soft); font-size:13px;
+  }
+  .table-row:last-child{ border-bottom:0; }
+  .table-row .pos{ font-family:"JetBrains Mono", monospace; font-size:11px; color:var(--text-mute); }
+  .table-row.is-leader .pos{ color:var(--league-color); font-weight:600; }
+  .table-row .name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .table-row .gd{ font-family:"JetBrains Mono", monospace; font-size:11px; color:var(--text-mute); }
+  .table-row .pts{ font-family:"JetBrains Mono", monospace; font-size:13px; font-weight:600; }
+
+  .back-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:13px; color:var(--text-dim);
+    padding:6px 0;
+    transition:color .15s;
+  }
+  .back-btn:hover{ color:var(--accent); }
+
+  footer{
+    max-width:1280px; margin:0 auto;
+    padding:32px 28px; color:var(--text-mute); font-size:12px;
+    border-top:1px solid var(--line-soft);
+    display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    font-family:"JetBrains Mono", monospace; letter-spacing:.06em;
+  }
+  footer a{ color:var(--text-dim); }
+
+  @media (max-width:1180px){
+    .page{ grid-template-columns:minmax(0,1fr) 280px; }
+    .ad-half-page{ width:100%; max-width:300px; }
+  }
+  @media (max-width:980px){
+    .page{ grid-template-columns:1fr; }
+    .sidebar-sticky{ position:static; }
+    .league-hero{ flex-direction:column; align-items:flex-start; }
+    .league-hero-meta h1{ font-size:30px; }
+    .match-row{ grid-template-columns: 80px 1fr; gap:10px; }
+    .match-stage, .match-net{ grid-column:2; padding-left:0; }
+    .ad-half-page{
+      width:100%; max-width:300px; height:auto; aspect-ratio:1/2;
+    }
+    .ad-inline{ height:auto; aspect-ratio:970/120; max-width:100%; }
+  }
+  @media (max-width:560px){
+    .tz-pill{ display:none; }
+    .ad-leaderboard{ height:60px; }
+    .ad-leaderboard-wrap{ padding:16px 16px 0; }
+    .page{ padding:16px 16px 60px; }
+  }
+
+  .lang-toggle{
+    display:inline-flex; gap:2px; padding:3px;
+    background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  }
+  .lang-toggle button{
+    background:transparent; border:0; cursor:pointer;
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    padding:5px 10px; color:var(--text-mute);
+    border-radius:6px; letter-spacing:0.08em; font-weight:500;
+    transition:color .15s, background .15s;
+  }
+  .lang-toggle button.active{ background:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .lang-toggle button:hover:not(.active){ color:var(--text); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="logo" href="../WhereToWatch FC.html">
+      <span class="logo-mark">W</span>
+      <span>WhereToWatch <em>FC</em></span>
+    </a>
+    <span class="crumbs"><a href="../WhereToWatch FC.html" data-i18n="crumbs.allleagues">Todas as ligas</a><span class="sep">/</span><span id="crumb-name">League</span></span>
+    <div class="lang-toggle" role="group" aria-label="Idioma" style="margin-left:auto;">
+      <button data-lang-set="pt">PT</button>
+      <button data-lang-set="en">EN</button>
+    </div>
+    <div class="tz-pill"><span class="dot"></span>BRT · Seg, 27 abr</div>
+  </div>
+</header>
+
+<div class="ad-leaderboard-wrap">
+  <div class="ad ad-leaderboard">Advertisement · 728 × 90</div>
+</div>
+
+<div class="page">
+  <main>
+    <a class="back-btn" href="../WhereToWatch FC.html" data-i18n="back.toleagues">← Voltar para todas as ligas</a>
+
+    <section class="league-hero" id="hero">
+      <div class="league-crest-xl" id="hero-crest">CBF</div>
+      <div class="league-hero-meta">
+        <div class="eyebrow" id="hero-region">Brazil · Série A</div>
+        <h1 id="hero-name">Campeonato Brasileiro</h1>
+        <p id="hero-blurb">Top-flight Brazilian football. 20 clubs, 38 matchdays, played from April to December.</p>
+        <div class="league-stats" id="hero-stats"></div>
+      </div>
+    </section>
+
+    <div class="nets-strip" id="nets-strip">
+      <span class="nets-strip-label"><span data-lang="pt">Onde assistir</span><span data-lang="en" hidden>Where to watch</span></span>
+    </div>
+
+    <div class="section-head">
+      <h2><span data-lang="pt">Próximos jogos</span><span data-lang="en" hidden>Upcoming matches</span></h2>
+      <span class="meta" id="match-count">—</span>
+    </div>
+
+    <div class="matches" id="matches"></div>
+
+    <div class="ad ad-inline" style="margin-top:28px;">Advertisement · 970 × 120</div>
+  </main>
+
+  <aside class="sidebar">
+    <div class="sidebar-sticky">
+      <div class="ad ad-half-page">Advertisement · 300 × 600</div>
+      <div class="side-card">
+        <h3 id="table-title" data-i18n="lg.standings.title">Classificação</h3>
+        <div id="standings"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span data-i18n="footer.tagline">© 2026 WhereToWatch FC · Guia independente de transmissões</span>
+  <span><a href="../WhereToWatch FC.html" data-i18n="crumbs.home">Início</a> · <a href="../about.html" data-i18n="footer.about">Sobre</a> · <a href="../networks/index.html" data-i18n="footer.networks">Canais</a> · <a href="../privacy.html" data-i18n="footer.privacy">Privacidade</a> · <a href="../contact.html" data-i18n="footer.contact">Contato</a></span>
+</footer>
+
+<script src="../i18n.js"></script>
+<script src="data.js"></script>
+<script>
+  I18N.apply();
+
+  const slug = (location.pathname.split('/').pop() || '').replace('.html','');
+  const L = (window.LEAGUES && window.LEAGUES[slug]) || window.LEAGUES['brasileirao'];
+
+  document.documentElement.style.setProperty('--league-color', L.color);
+  document.title = L.name + ' · WhereToWatch FC';
+  document.getElementById('crumb-name').textContent = L.name;
+  document.getElementById('hero-crest').textContent = L.crest;
+  document.getElementById('hero-region').textContent = I18N.pick(L.region);
+  document.getElementById('hero-name').textContent = L.name;
+  document.getElementById('hero-blurb').textContent = I18N.pick(L.blurb);
+
+  const stats = document.getElementById('hero-stats');
+  L.stats.forEach(s => {
+    stats.insertAdjacentHTML('beforeend',
+      `<div class="stat"><span class="stat-num">${I18N.pick(s.n)}</span><span class="stat-label">${I18N.pick(s.l)}</span></div>`);
+  });
+
+  const nets = document.getElementById('nets-strip');
+  L.networks.forEach(n => {
+    nets.insertAdjacentHTML('beforeend',
+      `<span class="net"><span class="swatch" style="--swatch:${n.c}"></span>${n.name}</span>`);
+  });
+
+  // group matches by day
+  const matchesEl = document.getElementById('matches');
+  const groups = {};
+  L.matches.forEach(m => { (groups[m.day] = groups[m.day] || []).push(m); });
+  let total = 0;
+  Object.keys(groups).forEach(day => {
+    const list = groups[day];
+    total += list.length;
+    const lbl = list.length > 1 ? I18N.t('lg.matches.label') : I18N.t('lg.match.label');
+    matchesEl.insertAdjacentHTML('beforeend',
+      `<div class="day-divider"><strong>${I18N.day(day)}</strong><span class="count">${list.length} ${lbl}</span></div>`);
+    list.forEach(m => {
+      const timeCell = m.live
+        ? `<span class="live">${m.live.replace('LIVE', I18N.t('live.label'))}</span>`
+        : `<span class="hr">${m.hr}</span>`;
+      const score = m.score ? `<span class="score">${m.score}</span>` : `<span class="vs">vs</span>`;
+      matchesEl.insertAdjacentHTML('beforeend', `
+        <div class="match-row${m.live?' is-live':''}">
+          <div class="match-time"><span class="day">${I18N.day(m.dayShort||day.split(',')[0])}</span>${timeCell}</div>
+          <div class="match-teams">
+            <span class="crest">${m.h.slice(0,3).toUpperCase()}</span>
+            <span class="team">${m.h}</span>
+            ${score}
+            <span class="team">${m.a}</span>
+            <span class="crest">${m.a.slice(0,3).toUpperCase()}</span>
+          </div>
+          <span class="match-stage">${I18N.stage(m.stage)}</span>
+          <div class="match-net">
+            ${m.nets.map(n=>`<span class="net"><span class="swatch" style="--swatch:${n.c}"></span>${n.name}</span>`).join('')}
+          </div>
+        </div>`);
+    });
+  });
+  document.getElementById('match-count').textContent = total + ' ' + I18N.t('lg.matches.label');
+
+  // standings
+  document.getElementById('table-title').textContent = I18N.pick(L.tableTitle) || I18N.t('lg.standings.title');
+  const st = document.getElementById('standings');
+  if (L.standings && L.standings.length){
+    L.standings.forEach((row, i) => {
+      st.insertAdjacentHTML('beforeend', `
+        <div class="table-row${i<3?' is-leader':''}">
+          <span class="pos">${String(i+1).padStart(2,'0')}</span>
+          <span class="name">${row.name}</span>
+          <span class="gd">${row.gd>=0?'+':''}${row.gd}</span>
+          <span class="pts">${row.pts}</span>
+        </div>`);
+    });
+  } else {
+    st.innerHTML = `<div style="color:var(--text-mute); font-size:13px; padding:8px 0;">${I18N.pick(L.standingsNote) || I18N.t('lg.standings.bracket')}</div>`;
+  }
+</script>
+</body>
+</html>

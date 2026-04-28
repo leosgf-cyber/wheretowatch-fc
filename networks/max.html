@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Network · WhereToWatch FC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0d1410; --bg-2:#111a14; --surface:#15211a; --surface-2:#1c2c23;
+    --line:#243b30; --line-soft:#1a2820;
+    --text:#e7ecf5; --text-dim:#9aa6bd; --text-mute:#65718a;
+    --accent:#22c55e; --accent-ink:#0a1410; --live:#ff4d6a;
+    --net-color:#22c55e;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"Space Grotesk", system-ui, sans-serif;
+    background:
+      radial-gradient(1100px 500px at 90% -10%, color-mix(in oklab, var(--net-color) 18%, transparent), transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, rgba(80,140,255,0.05), transparent 60%),
+      var(--bg);
+    color:var(--text); -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; text-decoration:none; }
+
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    backdrop-filter:saturate(140%) blur(10px);
+    background:rgba(13,20,16,0.78);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .topbar-inner{ max-width:1280px; margin:0 auto; padding:14px 28px; display:flex; align-items:center; gap:24px; }
+  .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; }
+  .logo-mark{
+    width:32px; height:32px; border-radius:9px;
+    background:var(--accent); color:var(--accent-ink);
+    display:grid; place-items:center; font-weight:700; font-size:14px;
+    box-shadow:0 0 0 1px rgba(34,197,94,0.4), 0 8px 24px -10px rgba(34,197,94,0.55);
+  }
+  .logo-name em{ font-style:normal; color:var(--accent); }
+  .crumbs{
+    font-family:"JetBrains Mono", monospace; font-size:12px;
+    color:var(--text-mute); margin-left:8px;
+  }
+  .crumbs a{ color:var(--text-dim); }
+  .crumbs a:hover{ color:var(--accent); }
+  .crumbs .sep{ margin:0 8px; }
+
+  /* Ad slots */
+  .ad{
+    background:#1a2820; border:2px dashed #5a6a60;
+    border-radius:12px; outline:1px solid rgba(34,197,94,0.08);
+    color:#aab5ad;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"JetBrains Mono", monospace;
+    font-size:13px; letter-spacing:0.18em; text-transform:uppercase;
+    position:relative;
+  }
+  .ad::before{
+    content:"Advertisement"; position:absolute; top:8px; left:12px;
+    font-size:11px; letter-spacing:0.2em; color:#9aa6a0;
+  }
+  .ad-leaderboard{ width:100%; max-width:728px; height:90px; margin:0 auto; }
+  .ad-leaderboard-wrap{ padding:20px 28px 0; max-width:1280px; margin:0 auto; }
+  .ad-half-page{ width:300px; height:600px; margin:0 auto; }
+
+  .page{
+    max-width:1280px; margin:0 auto;
+    padding:24px 28px 80px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 320px;
+    gap:32px;
+  }
+
+  .back-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:13px; color:var(--text-dim); padding:6px 0;
+    transition:color .15s;
+  }
+  .back-btn:hover{ color:var(--accent); }
+
+  .net-hero{
+    display:flex; gap:20px; align-items:center;
+    padding:24px 0 28px;
+    border-bottom:1px solid var(--line-soft); margin-bottom:24px;
+  }
+  .net-crest{
+    width:96px; height:96px; border-radius:50%;
+    background:linear-gradient(135deg, var(--net-color), color-mix(in oklab, var(--net-color) 40%, var(--bg-2)));
+    border:2px solid color-mix(in oklab, var(--net-color) 50%, var(--line));
+    display:grid; place-items:center; flex-shrink:0;
+    font-family:"JetBrains Mono", monospace; font-weight:700;
+    font-size:22px; color:var(--accent-ink);
+    box-shadow:0 0 0 6px color-mix(in oklab, var(--net-color) 12%, transparent);
+  }
+  .net-hero-meta{ flex:1; min-width:0; }
+  .net-hero-meta .kind{
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--text-mute); margin-bottom:6px;
+  }
+  .net-hero-meta h1{
+    margin:0 0 6px; font-size:42px; line-height:1;
+    letter-spacing:-0.02em; font-weight:700;
+  }
+  .net-hero-meta p{
+    margin:8px 0 0; color:var(--text-dim); font-size:14.5px; line-height:1.55;
+    max-width:60ch;
+  }
+  .stats{ display:flex; gap:28px; margin-top:14px; flex-wrap:wrap; }
+  .stat{ display:flex; flex-direction:column; }
+  .stat-num{
+    font-family:"JetBrains Mono", monospace; font-weight:600;
+    font-size:22px; color:var(--text);
+  }
+  .stat-label{
+    font-family:"JetBrains Mono", monospace; font-size:10px;
+    letter-spacing:0.16em; text-transform:uppercase; color:var(--text-mute);
+    margin-top:2px;
+  }
+
+  /* League groups */
+  .league-group{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; margin-bottom:20px; overflow:hidden;
+  }
+  .league-group-head{
+    display:flex; align-items:center; gap:12px;
+    padding:14px 18px; background:var(--bg-2);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .league-group-head .lg-crest{
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg, var(--league-color, var(--accent)), color-mix(in oklab, var(--league-color, var(--accent)) 40%, var(--bg-2)));
+    border:1px solid color-mix(in oklab, var(--league-color, var(--accent)) 40%, var(--line));
+    display:grid; place-items:center; font-family:"JetBrains Mono", monospace;
+    font-size:11px; font-weight:700; color:var(--accent-ink);
+  }
+  .league-group-head .lg-name{ font-weight:600; font-size:15px; flex:1; }
+  .league-group-head .lg-region{
+    font-family:"JetBrains Mono", monospace; font-size:10.5px;
+    letter-spacing:0.14em; text-transform:uppercase; color:var(--text-mute);
+  }
+  .league-group-head .lg-link{
+    font-size:12px; color:var(--accent);
+    font-family:"JetBrains Mono", monospace; letter-spacing:0.1em;
+  }
+
+  .match-row{
+    display:grid;
+    grid-template-columns:92px 1fr auto auto;
+    gap:18px; align-items:center;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line-soft);
+    transition:background .15s;
+  }
+  .match-row:last-child{ border-bottom:0; }
+  .match-row:hover{ background:var(--surface-2); }
+  .match-row.is-live{ background:linear-gradient(180deg, rgba(255,77,106,.07), transparent); }
+  .match-time{ display:flex; flex-direction:column; }
+  .match-time .day{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-mute); font-family:"JetBrains Mono", monospace; }
+  .match-time .hr{ font-family:"JetBrains Mono", monospace; font-size:15px; font-weight:600; margin-top:2px; }
+  .match-time .live{ color:var(--live); font-family:"JetBrains Mono", monospace; font-weight:600; display:inline-flex; align-items:center; gap:6px; }
+  .match-time .live::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--live); animation:pulse 1.6s infinite; }
+  @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(255,77,106,.7)} 70%{box-shadow:0 0 0 8px rgba(255,77,106,0)} 100%{box-shadow:0 0 0 0 rgba(255,77,106,0)} }
+  .match-teams{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .match-teams .crest{
+    width:24px; height:24px; border-radius:50%;
+    background:linear-gradient(135deg, var(--surface-2), var(--bg-2));
+    border:1px solid var(--line);
+    display:grid; place-items:center;
+    font-size:9px; font-family:"JetBrains Mono", monospace; color:var(--text-dim);
+    font-weight:600; flex-shrink:0;
+  }
+  .match-teams .vs{ font-family:"JetBrains Mono", monospace; font-size:11px; color:var(--text-mute); padding:0 4px; }
+  .match-teams .team{ font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .match-teams .score{ font-family:"JetBrains Mono", monospace; font-size:14px; font-weight:600; color:var(--accent); padding:0 8px; }
+  .match-stage{
+    font-family:"JetBrains Mono", monospace; font-size:10px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--text-mute);
+    border:1px solid var(--line); border-radius:5px; padding:4px 8px;
+  }
+  .match-net{ display:flex; gap:6px; }
+  .net{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 10px; border-radius:999px;
+    background:var(--surface-2); border:1px solid var(--line);
+    font-size:11.5px; color:var(--text-dim);
+  }
+  .net .swatch{
+    width:8px; height:8px; border-radius:50%;
+    background:var(--swatch, var(--text-mute));
+  }
+  .net.is-current{
+    background:color-mix(in oklab, var(--net-color) 14%, var(--surface));
+    border-color:color-mix(in oklab, var(--net-color) 50%, var(--line));
+    color:var(--text);
+  }
+
+  .empty{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:36px 24px; text-align:center;
+    color:var(--text-dim);
+  }
+
+  /* Sidebar */
+  .sidebar{ display:flex; flex-direction:column; gap:20px; }
+  .sidebar-sticky{ position:sticky; top:84px; display:flex; flex-direction:column; gap:20px; }
+  .side-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .side-card h3{
+    margin:0 0 14px; font-size:13px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--text-mute); font-family:"JetBrains Mono", monospace; font-weight:500;
+  }
+  .other-net{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 0; border-bottom:1px solid var(--line-soft);
+    font-size:13px; color:var(--text-dim);
+    transition:color .15s;
+  }
+  .other-net:last-child{ border-bottom:0; }
+  .other-net:hover{ color:var(--accent); }
+  .other-net .swatch{ width:10px; height:10px; border-radius:3px; }
+  .other-net .count{
+    margin-left:auto; font-family:"JetBrains Mono", monospace;
+    font-size:11px; color:var(--text-mute);
+  }
+
+  footer{
+    max-width:1280px; margin:0 auto;
+    padding:32px 28px; color:var(--text-mute); font-size:12px;
+    border-top:1px solid var(--line-soft);
+    display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    font-family:"JetBrains Mono", monospace; letter-spacing:.06em;
+  }
+  footer a{ color:var(--text-dim); }
+  footer a:hover{ color:var(--accent); }
+
+  @media (max-width:1180px){
+    .page{ grid-template-columns:minmax(0,1fr) 280px; }
+    .ad-half-page{ width:100%; max-width:300px; }
+  }
+  @media (max-width:980px){
+    .page{ grid-template-columns:1fr; }
+    .sidebar-sticky{ position:static; }
+    .net-hero{ flex-direction:column; align-items:flex-start; }
+    .net-hero-meta h1{ font-size:32px; }
+    .match-row{ grid-template-columns:80px 1fr; gap:10px; }
+    .match-stage, .match-net{ grid-column:2; padding-left:0; }
+    .ad-half-page{ width:100%; max-width:300px; height:auto; aspect-ratio:1/2; }
+  }
+  @media (max-width:560px){
+    .ad-leaderboard{ height:60px; }
+    .ad-leaderboard-wrap{ padding:16px 16px 0; }
+    .page{ padding:16px 16px 60px; }
+  }
+
+  .lang-toggle{
+    display:inline-flex; gap:2px; padding:3px;
+    background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  }
+  .lang-toggle button{
+    background:transparent; border:0; cursor:pointer;
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    padding:5px 10px; color:var(--text-mute);
+    border-radius:6px; letter-spacing:0.08em; font-weight:500;
+    transition:color .15s, background .15s;
+  }
+  .lang-toggle button.active{ background:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .lang-toggle button:hover:not(.active){ color:var(--text); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="logo" href="../WhereToWatch FC.html">
+      <span class="logo-mark">W</span>
+      <span class="logo-name">WhereToWatch <em>FC</em></span>
+    </a>
+    <span class="crumbs"><a href="../WhereToWatch FC.html" data-i18n="crumbs.home">Início</a><span class="sep">/</span><a href="index.html" data-i18n="crumbs.networks">Canais</a><span class="sep">/</span><span id="crumb-name">Network</span></span>
+    <div class="lang-toggle" role="group" aria-label="Idioma" style="margin-left:auto;">
+      <button data-lang-set="pt">PT</button>
+      <button data-lang-set="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="ad-leaderboard-wrap">
+  <div class="ad ad-leaderboard">Advertisement · 728 × 90</div>
+</div>
+
+<div class="page">
+  <main>
+    <a class="back-btn" href="index.html" data-i18n="net.detail.back">← Todos os canais</a>
+
+    <section class="net-hero">
+      <div class="net-crest" id="hero-crest">N</div>
+      <div class="net-hero-meta">
+        <div class="kind" id="hero-kind">Network type</div>
+        <h1 id="hero-name">Network</h1>
+        <p id="hero-blurb"></p>
+        <div class="stats" id="hero-stats"></div>
+      </div>
+    </section>
+
+    <div id="groups"></div>
+  </main>
+
+  <aside class="sidebar">
+    <div class="sidebar-sticky">
+      <div class="ad ad-half-page">Advertisement · 300 × 600</div>
+      <div class="side-card">
+        <h3 data-i18n="net.detail.othernets">Outros canais</h3>
+        <div id="other-nets"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span data-i18n="footer.tagline">© 2026 WhereToWatch FC · Guia independente de transmissões</span>
+  <span><a href="../WhereToWatch FC.html" data-i18n="crumbs.home">Início</a> · <a href="../about.html" data-i18n="footer.about">Sobre</a> · <a href="index.html" data-i18n="footer.networks">Canais</a> · <a href="../privacy.html" data-i18n="footer.privacy">Privacidade</a> · <a href="../contact.html" data-i18n="footer.contact">Contato</a></span>
+</footer>
+
+<script src="../i18n.js"></script>
+<script src="../leagues/data.js"></script>
+<script src="networks.js"></script>
+<script>
+  I18N.apply();
+
+  const slug = (location.pathname.split('/').pop() || '').replace('.html','');
+  const N = window.NETWORKS[slug] || window.NETWORKS['globo'];
+  const kindStr = I18N.pick(N.kind);
+
+  document.documentElement.style.setProperty('--net-color', N.c);
+  document.title = N.name + ' · WhereToWatch FC';
+  document.getElementById('crumb-name').textContent = N.name;
+  document.getElementById('hero-name').textContent = N.name;
+  document.getElementById('hero-kind').textContent = kindStr;
+  document.getElementById('hero-crest').textContent = N.name.replace(/[+\s].*$/, '').slice(0,3).toUpperCase();
+
+  // Aggregate matches across all leagues for this broadcaster
+  const groups = []; // [{league, leagueSlug, matches:[]}]
+  let totalMatches = 0;
+  Object.keys(window.LEAGUES).forEach(lSlug => {
+    const L = window.LEAGUES[lSlug];
+    const ms = (L.matches || []).filter(m =>
+      (m.nets || []).some(n => n.name === N.name)
+    );
+    if (ms.length) {
+      groups.push({ league:L, leagueSlug:lSlug, matches:ms });
+      totalMatches += ms.length;
+    }
+  });
+
+  if (totalMatches){
+    const jogo = totalMatches > 1 ? I18N.t('lg.matches.label') : I18N.t('lg.match.label');
+    const comp = groups.length > 1
+      ? (I18N.lang === 'pt' ? 'competições' : 'competitions')
+      : (I18N.lang === 'pt' ? 'competição' : 'competition');
+    document.getElementById('hero-blurb').textContent = I18N.t('net.detail.blurb.tpl')
+      .replace('{n}', totalMatches)
+      .replace('{jogo}', jogo)
+      .replace('{c}', groups.length)
+      .replace('{competicao}', comp);
+  } else {
+    document.getElementById('hero-blurb').textContent = I18N.t('net.detail.blurb.empty').replace('{name}', N.name);
+  }
+
+  const stats = document.getElementById('hero-stats');
+  stats.insertAdjacentHTML('beforeend', `<div class="stat"><span class="stat-num">${totalMatches}</span><span class="stat-label">${I18N.t('net.detail.stats.matches')}</span></div>`);
+  stats.insertAdjacentHTML('beforeend', `<div class="stat"><span class="stat-num">${groups.length}</span><span class="stat-label">${I18N.t('net.detail.stats.comps')}</span></div>`);
+  stats.insertAdjacentHTML('beforeend', `<div class="stat"><span class="stat-num">${kindStr.split('·')[0].trim()}</span><span class="stat-label">${I18N.t('net.detail.stats.kind')}</span></div>`);
+
+  // Render league groups
+  const groupsEl = document.getElementById('groups');
+  if (!groups.length) {
+    groupsEl.insertAdjacentHTML('beforeend',
+      `<div class="empty">${I18N.t('net.detail.empty.body').replace('{name}', N.name)}</div>`);
+  } else {
+    groups.forEach(g => {
+      const L = g.league;
+      groupsEl.insertAdjacentHTML('beforeend', `
+        <div class="league-group" style="--league-color:${L.color};">
+          <div class="league-group-head">
+            <div class="lg-crest">${L.crest}</div>
+            <div class="lg-name">${L.name}</div>
+            <div class="lg-region">${I18N.pick(L.region)}</div>
+            <a class="lg-link" href="../leagues/${g.leagueSlug}.html">${I18N.t('net.detail.viewleague')}</a>
+          </div>
+          <div class="lg-matches" id="lg-${g.leagueSlug}"></div>
+        </div>`);
+      const list = document.getElementById('lg-' + g.leagueSlug);
+      g.matches.forEach(m => {
+        const timeCell = m.live
+          ? `<span class="live">${m.live.replace('LIVE', I18N.t('live.label'))}</span>`
+          : `<span class="hr">${m.hr}</span>`;
+        const score = m.score ? `<span class="score">${m.score}</span>` : `<span class="vs">vs</span>`;
+        const netsHtml = m.nets.map(n => {
+          const cur = n.name === N.name ? ' is-current' : '';
+          return `<span class="net${cur}"><span class="swatch" style="--swatch:${n.c}"></span>${n.name}</span>`;
+        }).join('');
+        list.insertAdjacentHTML('beforeend', `
+          <div class="match-row${m.live?' is-live':''}">
+            <div class="match-time"><span class="day">${I18N.day(m.dayShort||m.day.split(',')[0])}</span>${timeCell}</div>
+            <div class="match-teams">
+              <span class="crest">${m.h.slice(0,3).toUpperCase()}</span>
+              <span class="team">${m.h}</span>
+              ${score}
+              <span class="team">${m.a}</span>
+              <span class="crest">${m.a.slice(0,3).toUpperCase()}</span>
+            </div>
+            <span class="match-stage">${I18N.stage(m.stage)}</span>
+            <div class="match-net">${netsHtml}</div>
+          </div>`);
+      });
+    });
+  }
+
+  // Other networks sidebar (top 6 by match count, excluding current)
+  const counts = {};
+  Object.values(window.LEAGUES).forEach(L => {
+    (L.matches || []).forEach(m => {
+      (m.nets || []).forEach(n => { counts[n.name] = (counts[n.name] || 0) + 1; });
+    });
+  });
+  const slugByName = {};
+  Object.keys(window.NETWORKS).forEach(s => { slugByName[window.NETWORKS[s].name] = s; });
+  const others = Object.keys(window.NETWORKS)
+    .filter(s => s !== slug)
+    .map(s => ({ slug:s, ...window.NETWORKS[s], count: counts[window.NETWORKS[s].name] || 0 }))
+    .sort((a,b) => b.count - a.count)
+    .slice(0, 6);
+  const otherEl = document.getElementById('other-nets');
+  others.forEach(o => {
+    otherEl.insertAdjacentHTML('beforeend', `
+      <a class="other-net" href="${o.slug}.html">
+        <span class="swatch" style="background:${o.c}"></span>
+        <span>${o.name}</span>
+        <span class="count">${o.count}</span>
+      </a>`);
+  });
+</script>
+</body>
+</html>

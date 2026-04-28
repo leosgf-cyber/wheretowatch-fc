@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# node (caso a Fase 1 do worker entre depois)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+
+# Cloudflare wrangler (futuro)
+.wrangler/
+.dev.vars
+
+# secrets / env
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+service-account*.json
+
+# logs / temp
+*.log
+.cache/
+tmp/

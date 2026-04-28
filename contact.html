@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Contato · WhereToWatch FC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0d1410; --bg-2:#111a14; --surface:#15211a; --surface-2:#1c2c23;
+    --line:#243b30; --line-soft:#1a2820;
+    --text:#e7ecf5; --text-dim:#9aa6bd; --text-mute:#65718a;
+    --accent:#22c55e; --accent-ink:#0a1410;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"Space Grotesk", system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(34,197,94,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text); -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; text-decoration:none; }
+
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    backdrop-filter:saturate(140%) blur(10px);
+    background:rgba(13,20,16,0.78);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .topbar-inner{ max-width:1280px; margin:0 auto; padding:14px 28px; display:flex; align-items:center; gap:24px; }
+  .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; }
+  .logo-mark{
+    width:32px; height:32px; border-radius:9px;
+    background:var(--accent); color:var(--accent-ink);
+    display:grid; place-items:center; font-weight:700; font-size:14px;
+    box-shadow:0 0 0 1px rgba(34,197,94,0.4), 0 8px 24px -10px rgba(34,197,94,0.55);
+  }
+  .logo-name em{ font-style:normal; color:var(--accent); }
+  .crumbs{
+    font-family:"JetBrains Mono", monospace; font-size:12px;
+    color:var(--text-mute); margin-left:8px;
+  }
+  .crumbs a{ color:var(--text-dim); }
+  .crumbs a:hover{ color:var(--accent); }
+  .crumbs .sep{ margin:0 8px; }
+
+  .ad{
+    background:#1a2820; border:2px dashed #5a6a60;
+    border-radius:12px; outline:1px solid rgba(34,197,94,0.08);
+    color:#aab5ad;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"JetBrains Mono", monospace;
+    font-size:13px; letter-spacing:0.18em; text-transform:uppercase;
+    position:relative;
+  }
+  .ad::before{
+    content:"Advertisement"; position:absolute; top:8px; left:12px;
+    font-size:11px; letter-spacing:0.2em; color:#9aa6a0;
+  }
+  .ad-leaderboard{ width:100%; max-width:728px; height:90px; margin:0 auto; }
+  .ad-leaderboard-wrap{ padding:20px 28px 0; max-width:1280px; margin:0 auto; }
+  .ad-half-page{ width:300px; height:600px; margin:0 auto; }
+
+  .page{
+    max-width:1280px; margin:0 auto;
+    padding:24px 28px 80px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 320px;
+    gap:32px;
+  }
+
+  .doc{ padding:36px 0 28px; }
+  .doc .eyebrow{
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--text-mute); margin-bottom:14px;
+  }
+  .doc h1{
+    font-size:46px; line-height:1.05; letter-spacing:-0.02em;
+    margin:0 0 16px; font-weight:700;
+  }
+  .doc h1 em{ font-style:normal; color:var(--accent); }
+  .doc .lede{
+    font-size:18px; color:var(--text-dim); line-height:1.55;
+    max-width:62ch; margin:0 0 28px;
+  }
+
+  .channels{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:14px;
+    margin:8px 0 36px;
+  }
+  .channel{
+    display:flex; gap:14px; align-items:flex-start;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:18px;
+    transition:border-color .15s, transform .15s;
+  }
+  .channel:hover{ border-color:var(--accent); transform:translateY(-2px); }
+  .channel-icon{
+    width:42px; height:42px; border-radius:10px; flex-shrink:0;
+    background:linear-gradient(135deg, color-mix(in oklab, var(--accent) 30%, var(--surface-2)), var(--surface-2));
+    border:1px solid var(--line);
+    display:grid; place-items:center; color:var(--accent);
+    font-family:"JetBrains Mono", monospace; font-size:18px; font-weight:600;
+  }
+  .channel h3{
+    margin:0 0 4px; font-size:15px; letter-spacing:-0.005em;
+  }
+  .channel p{ margin:0; font-size:13.5px; color:var(--text-dim); line-height:1.5; }
+  .channel a.email{
+    display:inline-block; margin-top:8px;
+    font-family:"JetBrains Mono", monospace; font-size:13px;
+    color:var(--accent);
+    border-bottom:1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+
+  .doc h2{ font-size:20px; margin:32px 0 10px; letter-spacing:-0.01em; }
+  .doc p, .doc li{ color:var(--text-dim); font-size:15px; line-height:1.65; }
+  .doc ul{ padding-left:20px; }
+  .doc li{ margin:6px 0; }
+  .doc strong{ color:var(--text); font-weight:600; }
+
+  .sidebar{ display:flex; flex-direction:column; gap:20px; }
+  .sidebar-sticky{ position:sticky; top:84px; display:flex; flex-direction:column; gap:20px; }
+  .side-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .side-card h3{
+    margin:0 0 14px; font-size:13px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--text-mute); font-family:"JetBrains Mono", monospace; font-weight:500;
+  }
+  .side-card p{ margin:0 0 8px; font-size:13.5px; color:var(--text-dim); line-height:1.55; }
+
+  footer{
+    max-width:1280px; margin:0 auto;
+    padding:32px 28px; color:var(--text-mute); font-size:12px;
+    border-top:1px solid var(--line-soft);
+    display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    font-family:"JetBrains Mono", monospace; letter-spacing:.06em;
+  }
+  footer a{ color:var(--text-dim); }
+  footer a:hover{ color:var(--accent); }
+
+  .lang-toggle{
+    display:inline-flex; gap:2px; padding:3px;
+    background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  }
+  .lang-toggle button{
+    background:transparent; border:0; cursor:pointer;
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    padding:5px 10px; color:var(--text-mute);
+    border-radius:6px; letter-spacing:0.08em; font-weight:500;
+    transition:color .15s, background .15s;
+  }
+  .lang-toggle button.active{ background:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .lang-toggle button:hover:not(.active){ color:var(--text); }
+
+  @media (max-width:1180px){
+    .page{ grid-template-columns:minmax(0,1fr) 280px; }
+    .ad-half-page{ width:100%; max-width:300px; }
+  }
+  @media (max-width:980px){
+    .page{ grid-template-columns:1fr; }
+    .sidebar-sticky{ position:static; }
+    .doc h1{ font-size:34px; }
+    .channels{ grid-template-columns:1fr; }
+    .ad-half-page{ width:100%; max-width:300px; height:auto; aspect-ratio:1/2; }
+  }
+  @media (max-width:560px){
+    .ad-leaderboard{ height:60px; }
+    .ad-leaderboard-wrap{ padding:16px 16px 0; }
+    .page{ padding:16px 16px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="logo" href="WhereToWatch FC.html">
+      <span class="logo-mark">W</span>
+      <span class="logo-name">WhereToWatch <em>FC</em></span>
+    </a>
+    <span class="crumbs"><a href="WhereToWatch FC.html" data-i18n="crumbs.home">Início</a><span class="sep">/</span><span data-lang="pt">Contato</span><span data-lang="en" hidden>Contact</span></span>
+    <div class="lang-toggle" role="group" aria-label="Idioma" style="margin-left:auto;">
+      <button data-lang-set="pt">PT</button>
+      <button data-lang-set="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="ad-leaderboard-wrap">
+  <div class="ad ad-leaderboard">Advertisement · 728 × 90</div>
+</div>
+
+<div class="page">
+  <main>
+    <section class="doc">
+      <div class="eyebrow" data-i18n="contact.eyebrow">Entre em contato</div>
+
+      <div data-lang="pt">
+        <h1>Achou um canal errado? Tem uma <em>dica ou correção</em>?</h1>
+        <p class="lede">As negociações de transmissão mudam o tempo todo. Se você ver uma partida atribuída ao canal errado, o jeito mais rápido de resolver é avisar — escolha o canal apropriado e mande uma mensagem.</p>
+
+        <div class="channels">
+          <div class="channel">
+            <div class="channel-icon">@</div>
+            <div>
+              <h3>Contato geral</h3>
+              <p>Dúvidas, ideias de parceria, ou qualquer coisa que não se encaixe nos outros.</p>
+              <a class="email" href="mailto:hello@wheretowatch.fc">hello@wheretowatch.fc</a>
+            </div>
+          </div>
+          <div class="channel">
+            <div class="channel-icon">!</div>
+            <div>
+              <h3>Correções de programação</h3>
+              <p>Canal errado, horário errado, jogo faltando — caminho mais rápido para a correção.</p>
+              <a class="email" href="mailto:fix@wheretowatch.fc">fix@wheretowatch.fc</a>
+            </div>
+          </div>
+          <div class="channel">
+            <div class="channel-icon">⚖</div>
+            <div>
+              <h3>Jurídico &amp; remoção</h3>
+              <p>Dúvidas sobre logos, marca ou conteúdo de detentores de direitos.</p>
+              <a class="email" href="mailto:legal@wheretowatch.fc">legal@wheretowatch.fc</a>
+            </div>
+          </div>
+          <div class="channel">
+            <div class="channel-icon">$</div>
+            <div>
+              <h3>Publicidade</h3>
+              <p>O site roda Google AdSense por padrão; para patrocínios diretos, escreva aqui.</p>
+              <a class="email" href="mailto:ads@wheretowatch.fc">ads@wheretowatch.fc</a>
+            </div>
+          </div>
+        </div>
+
+        <h2>O que ajuda a gente a te ajudar</h2>
+        <p>Ao reportar uma correção, inclua se possível:</p>
+        <ul>
+          <li>O jogo (mandante × visitante) e a data</li>
+          <li>A competição (ex.: Brasileirão Rod 32, Champions Semi · ida)</li>
+          <li>O canal que listamos e o que está realmente exibindo o jogo</li>
+          <li>Se possível, um link para a programação oficial da emissora</li>
+        </ul>
+
+        <h2>Tempo de resposta</h2>
+        <p>O site é mantido por uma pequena equipe no horário de Brasília (BRT). A maioria das respostas sai em até 48h; correções em programação ao vivo entram na frente de tudo.</p>
+      </div>
+
+      <div data-lang="en" hidden>
+        <h1>Spotted a wrong channel? Have a <em>tip or correction</em>?</h1>
+        <p class="lede">Broadcast deals shift constantly. If you see a fixture pinned to the wrong channel, the fastest fix is to tell us — pick the channel that fits and drop us a line.</p>
+
+        <div class="channels">
+          <div class="channel">
+            <div class="channel-icon">@</div>
+            <div>
+              <h3>General contact</h3>
+              <p>Questions, partnership ideas, or anything that doesn't fit elsewhere.</p>
+              <a class="email" href="mailto:hello@wheretowatch.fc">hello@wheretowatch.fc</a>
+            </div>
+          </div>
+          <div class="channel">
+            <div class="channel-icon">!</div>
+            <div>
+              <h3>Schedule corrections</h3>
+              <p>Wrong broadcaster, wrong kickoff time, missing match — fastest path to a fix.</p>
+              <a class="email" href="mailto:fix@wheretowatch.fc">fix@wheretowatch.fc</a>
+            </div>
+          </div>
+          <div class="channel">
+            <div class="channel-icon">⚖</div>
+            <div>
+              <h3>Legal &amp; takedowns</h3>
+              <p>Logo, branding, or content concerns from rights holders.</p>
+              <a class="email" href="mailto:legal@wheretowatch.fc">legal@wheretowatch.fc</a>
+            </div>
+          </div>
+          <div class="channel">
+            <div class="channel-icon">$</div>
+            <div>
+              <h3>Advertising</h3>
+              <p>The site runs Google AdSense by default; for direct sponsorships, write here.</p>
+              <a class="email" href="mailto:ads@wheretowatch.fc">ads@wheretowatch.fc</a>
+            </div>
+          </div>
+        </div>
+
+        <h2>What helps us help you</h2>
+        <p>When reporting a correction, please include:</p>
+        <ul>
+          <li>The match (home team vs away team) and the date</li>
+          <li>The competition (e.g. Brasileirão MD 32, Champions League SF 1st leg)</li>
+          <li>The channel or streaming service we listed, and the one that's actually showing it</li>
+          <li>If possible, a link to the broadcaster's own listing</li>
+        </ul>
+
+        <h2>Response time</h2>
+        <p>This site is run by a small team in Brazilian time (BRT). Most replies happen within 48 hours; corrections to live schedules are prioritized over everything else.</p>
+      </div>
+    </section>
+  </main>
+
+  <aside class="sidebar">
+    <div class="sidebar-sticky">
+      <div class="ad ad-half-page">Advertisement · 300 × 600</div>
+      <div class="side-card" data-lang="pt">
+        <h3>Antes de escrever</h3>
+        <p>Se você está tentando achar onde passa um jogo específico — comece pela home ou escolha uma competição. A maioria das perguntas "onde eu assisto X?" já está respondida lá.</p>
+        <p style="margin-top:10px;"><a href="WhereToWatch FC.html" style="color:var(--accent);">Voltar para as ligas →</a></p>
+      </div>
+      <div class="side-card" data-lang="en" hidden>
+        <h3>Before you write</h3>
+        <p>If you're trying to find where a specific match is — start on the home page or pick a competition. Most "where can I watch X?" questions are already answered there.</p>
+        <p style="margin-top:10px;"><a href="WhereToWatch FC.html" style="color:var(--accent);">Back to leagues →</a></p>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span data-i18n="footer.tagline">© 2026 WhereToWatch FC · Guia independente de transmissões</span>
+  <span><a href="about.html" data-i18n="footer.about">Sobre</a> · <a href="networks/index.html" data-i18n="footer.networks">Canais</a> · <a href="privacy.html" data-i18n="footer.privacy">Privacidade</a> · <a href="contact.html" data-i18n="footer.contact">Contato</a></span>
+</footer>
+
+<script src="i18n.js"></script>
+<script>I18N.apply();</script>
+
+</body>
+</html>

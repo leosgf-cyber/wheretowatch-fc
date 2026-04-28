@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sobre · WhereToWatch FC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0d1410; --bg-2:#111a14; --surface:#15211a; --surface-2:#1c2c23;
+    --line:#243b30; --line-soft:#1a2820;
+    --text:#e7ecf5; --text-dim:#9aa6bd; --text-mute:#65718a;
+    --accent:#22c55e; --accent-ink:#0a1410; --live:#ff4d6a;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"Space Grotesk", system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(34,197,94,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text); -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; text-decoration:none; }
+
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    backdrop-filter:saturate(140%) blur(10px);
+    background:rgba(13,20,16,0.78);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .topbar-inner{ max-width:1280px; margin:0 auto; padding:14px 28px; display:flex; align-items:center; gap:24px; }
+  .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; }
+  .logo-mark{
+    width:32px; height:32px; border-radius:9px;
+    background:var(--accent); color:var(--accent-ink);
+    display:grid; place-items:center; font-weight:700; font-size:14px;
+    box-shadow:0 0 0 1px rgba(34,197,94,0.4), 0 8px 24px -10px rgba(34,197,94,0.55);
+  }
+  .logo-name em{ font-style:normal; color:var(--accent); }
+  .crumbs{
+    font-family:"JetBrains Mono", monospace; font-size:12px;
+    color:var(--text-mute); margin-left:8px;
+  }
+  .crumbs a{ color:var(--text-dim); }
+  .crumbs a:hover{ color:var(--accent); }
+  .crumbs .sep{ margin:0 8px; }
+
+  .ad{
+    background:#1a2820; border:2px dashed #5a6a60;
+    border-radius:12px; outline:1px solid rgba(34,197,94,0.08);
+    color:#aab5ad;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"JetBrains Mono", monospace;
+    font-size:13px; letter-spacing:0.18em; text-transform:uppercase;
+    position:relative;
+  }
+  .ad::before{
+    content:"Advertisement"; position:absolute; top:8px; left:12px;
+    font-size:11px; letter-spacing:0.2em; color:#9aa6a0;
+  }
+  .ad-leaderboard{ width:100%; max-width:728px; height:90px; margin:0 auto; }
+  .ad-leaderboard-wrap{ padding:20px 28px 0; max-width:1280px; margin:0 auto; }
+  .ad-half-page{ width:300px; height:600px; margin:0 auto; }
+
+  .page{
+    max-width:1280px; margin:0 auto;
+    padding:24px 28px 80px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 320px;
+    gap:32px;
+  }
+
+  .doc{ padding:36px 0 28px; }
+  .doc .eyebrow{
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--text-mute); margin-bottom:14px;
+  }
+  .doc h1{
+    font-size:46px; line-height:1.05;
+    letter-spacing:-0.02em; margin:0 0 18px;
+    font-weight:700;
+  }
+  .doc h1 em{ font-style:normal; color:var(--accent); }
+  .doc h2{
+    font-size:22px; margin:36px 0 12px;
+    letter-spacing:-0.01em;
+  }
+  .doc p, .doc li{
+    color:var(--text-dim); font-size:15.5px; line-height:1.65;
+  }
+  .doc ul{ padding-left:20px; }
+  .doc li{ margin:6px 0; }
+  .doc strong{ color:var(--text); font-weight:600; }
+
+  .doc-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;
+    margin:28px 0 8px;
+  }
+  .doc-card{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:12px; padding:18px;
+  }
+  .doc-card h3{
+    margin:0 0 8px; font-size:13px; letter-spacing:0.14em;
+    text-transform:uppercase; color:var(--accent);
+    font-family:"JetBrains Mono", monospace; font-weight:600;
+  }
+  .doc-card p{ font-size:13.5px; margin:0; color:var(--text-dim); }
+
+  .sidebar{ display:flex; flex-direction:column; gap:20px; }
+  .sidebar-sticky{ position:sticky; top:84px; display:flex; flex-direction:column; gap:20px; }
+  .side-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .side-card h3{
+    margin:0 0 14px; font-size:13px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--text-mute); font-family:"JetBrains Mono", monospace; font-weight:500;
+  }
+  .side-card a.row{
+    display:block; padding:9px 0; border-bottom:1px solid var(--line-soft);
+    font-size:13.5px; color:var(--text-dim); transition:color .15s;
+  }
+  .side-card a.row:last-child{ border-bottom:0; }
+  .side-card a.row:hover{ color:var(--accent); }
+
+  footer{
+    max-width:1280px; margin:0 auto;
+    padding:32px 28px; color:var(--text-mute); font-size:12px;
+    border-top:1px solid var(--line-soft);
+    display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    font-family:"JetBrains Mono", monospace; letter-spacing:.06em;
+  }
+  footer a{ color:var(--text-dim); }
+  footer a:hover{ color:var(--accent); }
+
+  .lang-toggle{
+    display:inline-flex; gap:2px; padding:3px;
+    background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  }
+  .lang-toggle button{
+    background:transparent; border:0; cursor:pointer;
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    padding:5px 10px; color:var(--text-mute);
+    border-radius:6px; letter-spacing:0.08em; font-weight:500;
+    transition:color .15s, background .15s;
+  }
+  .lang-toggle button.active{ background:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .lang-toggle button:hover:not(.active){ color:var(--text); }
+
+  @media (max-width:1180px){
+    .page{ grid-template-columns:minmax(0,1fr) 280px; }
+    .ad-half-page{ width:100%; max-width:300px; }
+  }
+  @media (max-width:980px){
+    .page{ grid-template-columns:1fr; }
+    .sidebar-sticky{ position:static; }
+    .doc h1{ font-size:34px; }
+    .doc-grid{ grid-template-columns:1fr; }
+    .ad-half-page{ width:100%; max-width:300px; height:auto; aspect-ratio:1/2; }
+  }
+  @media (max-width:560px){
+    .ad-leaderboard{ height:60px; }
+    .ad-leaderboard-wrap{ padding:16px 16px 0; }
+    .page{ padding:16px 16px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="logo" href="WhereToWatch FC.html">
+      <span class="logo-mark">W</span>
+      <span class="logo-name">WhereToWatch <em>FC</em></span>
+    </a>
+    <span class="crumbs"><a href="WhereToWatch FC.html" data-i18n="crumbs.home">Início</a><span class="sep">/</span><span data-lang="pt">Sobre</span><span data-lang="en" hidden>About</span></span>
+    <div class="lang-toggle" role="group" aria-label="Idioma" style="margin-left:auto;">
+      <button data-lang-set="pt">PT</button>
+      <button data-lang-set="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="ad-leaderboard-wrap">
+  <div class="ad ad-leaderboard">Advertisement · 728 × 90</div>
+</div>
+
+<div class="page">
+  <main>
+    <section class="doc">
+      <div class="eyebrow" data-i18n="about.eyebrow">Sobre o projeto</div>
+
+      <div data-lang="pt">
+        <h1>Um guia independente para <em>onde assistir</em> as maiores ligas de futebol do mundo.</h1>
+        <p>O WhereToWatch FC é um guia de transmissões feito por fãs. Nosso único trabalho: dizer qual canal ou serviço de streaming está exibindo as partidas que você quer ver — sem esconder a resposta sob três camadas de menu.</p>
+
+        <div class="doc-grid">
+          <div class="doc-card">
+            <h3>O que cobrimos</h3>
+            <p>9 competições no Brasil, América do Sul e Europa — do Brasileirão e Copa do Brasil à Champions League, La Liga, Serie A, Bundesliga, Ligue 1 e Primeira Liga.</p>
+          </div>
+          <div class="doc-card">
+            <h3>Como atualizamos</h3>
+            <p>A programação e a alocação dos canais são revistas antes de cada rodada. Se você notar um canal errado, fale com a gente — veja a página de contato.</p>
+          </div>
+          <div class="doc-card">
+            <h3>Independência</h3>
+            <p>Não temos vínculo com nenhuma liga, clube ou emissora. Logos e nomes pertencem aos seus respectivos donos.</p>
+          </div>
+        </div>
+
+        <h2>Por que existe</h2>
+        <p>O torcedor brasileiro malabariza seis ou sete emissoras numa semana qualquer — Globo, Premiere, SporTV, ESPN, Disney+, Prime Video, CazéTV, Paramount+. Os fãs europeus têm a sua própria selva. Perguntar "onde eu assisto esse jogo?" deveria levar cinco segundos, não uma busca no Google entre fóruns de 2019.</p>
+
+        <h2>Como é mantido</h2>
+        <p>O site é sustentado pelo Google AdSense. Você verá dois espaços de publicidade claramente identificados: um banner abaixo do cabeçalho e uma unidade meia-página na barra lateral. Não rodamos pop-ups, vídeos com autoplay ou nada que se interponha entre você e a programação.</p>
+
+        <h2>Aviso</h2>
+        <p>A programação dos canais pode mudar a curto prazo — especialmente em copas eliminatórias, em que os direitos são adquiridos jogo a jogo. Cheque sempre a programação oficial do seu provedor antes do apito inicial. A gente faz o melhor possível, mas a fonte final de verdade é a emissora.</p>
+      </div>
+
+      <div data-lang="en" hidden>
+        <h1>An independent guide to <em>where to watch</em> the world's biggest football leagues.</h1>
+        <p>WhereToWatch FC is a fan-built broadcast guide. Our only job: tell you which channel or streaming service is showing the matches you care about, and do it without burying the answer under three layers of menus.</p>
+
+        <div class="doc-grid">
+          <div class="doc-card">
+            <h3>What we cover</h3>
+            <p>9 competitions across Brazil, South America and Europe — from Brasileirão and Copa do Brasil to Champions League, La Liga, Serie A, Bundesliga, Ligue 1 and Primeira Liga.</p>
+          </div>
+          <div class="doc-card">
+            <h3>How we update</h3>
+            <p>Schedules and broadcaster assignments are reviewed before every matchday. If you spot a wrong channel, drop us a line — see the contact page.</p>
+          </div>
+          <div class="doc-card">
+            <h3>Independence</h3>
+            <p>We are not affiliated with any league, club, or broadcaster. Logos and names belong to their respective owners.</p>
+          </div>
+        </div>
+
+        <h2>Why we built this</h2>
+        <p>Brazilian football fans juggle six or seven different broadcasters in any given week — Globo, Premiere, SporTV, ESPN, Disney+, Prime Video, CazéTV, Paramount+. European fans have their own jungle. Asking "where can I watch this game?" should take five seconds, not a Google search through forum posts from 2019.</p>
+
+        <h2>How it's funded</h2>
+        <p>The site is supported by Google AdSense. You'll see two clearly-marked ad slots: one banner below the header and one half-page unit in the right sidebar. We don't run pop-ups, autoplay video, or anything that gets between you and the schedule.</p>
+
+        <h2>Disclaimer</h2>
+        <p>Broadcaster line-ups can change at short notice — especially for cup competitions where channels acquire matches game by game. Always double-check on your provider's own listings before kickoff. We do our best, but the responsibility for the final source of truth lies with the broadcaster.</p>
+      </div>
+    </section>
+  </main>
+
+  <aside class="sidebar">
+    <div class="sidebar-sticky">
+      <div class="ad ad-half-page">Advertisement · 300 × 600</div>
+      <div class="side-card">
+        <h3><span data-lang="pt">Mais do site</span><span data-lang="en" hidden>More from us</span></h3>
+        <a class="row" href="networks/index.html"><span data-lang="pt">Ver todos os canais →</span><span data-lang="en" hidden>Browse all networks →</span></a>
+        <a class="row" href="WhereToWatch FC.html"><span data-lang="pt">Voltar para as ligas</span><span data-lang="en" hidden>Back to leagues</span></a>
+        <a class="row" href="contact.html" data-i18n="footer.contact">Contato</a>
+        <a class="row" href="privacy.html"><span data-lang="pt">Política de privacidade</span><span data-lang="en" hidden>Privacy policy</span></a>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span data-i18n="footer.tagline">© 2026 WhereToWatch FC · Guia independente de transmissões</span>
+  <span><a href="about.html" data-i18n="footer.about">Sobre</a> · <a href="networks/index.html" data-i18n="footer.networks">Canais</a> · <a href="privacy.html" data-i18n="footer.privacy">Privacidade</a> · <a href="contact.html" data-i18n="footer.contact">Contato</a></span>
+</footer>
+
+<script src="i18n.js"></script>
+<script>I18N.apply();</script>
+
+</body>
+</html>

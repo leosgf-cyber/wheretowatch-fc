@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Política de Privacidade · WhereToWatch FC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0d1410; --bg-2:#111a14; --surface:#15211a; --surface-2:#1c2c23;
+    --line:#243b30; --line-soft:#1a2820;
+    --text:#e7ecf5; --text-dim:#9aa6bd; --text-mute:#65718a;
+    --accent:#22c55e; --accent-ink:#0a1410;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"Space Grotesk", system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(34,197,94,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text); -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; text-decoration:none; }
+
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    backdrop-filter:saturate(140%) blur(10px);
+    background:rgba(13,20,16,0.78);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .topbar-inner{ max-width:1280px; margin:0 auto; padding:14px 28px; display:flex; align-items:center; gap:24px; }
+  .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; }
+  .logo-mark{
+    width:32px; height:32px; border-radius:9px;
+    background:var(--accent); color:var(--accent-ink);
+    display:grid; place-items:center; font-weight:700; font-size:14px;
+    box-shadow:0 0 0 1px rgba(34,197,94,0.4), 0 8px 24px -10px rgba(34,197,94,0.55);
+  }
+  .logo-name em{ font-style:normal; color:var(--accent); }
+  .crumbs{
+    font-family:"JetBrains Mono", monospace; font-size:12px;
+    color:var(--text-mute); margin-left:8px;
+  }
+  .crumbs a{ color:var(--text-dim); }
+  .crumbs a:hover{ color:var(--accent); }
+  .crumbs .sep{ margin:0 8px; }
+
+  .ad{
+    background:#1a2820; border:2px dashed #5a6a60;
+    border-radius:12px; outline:1px solid rgba(34,197,94,0.08);
+    color:#aab5ad;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"JetBrains Mono", monospace;
+    font-size:13px; letter-spacing:0.18em; text-transform:uppercase;
+    position:relative;
+  }
+  .ad::before{
+    content:"Advertisement"; position:absolute; top:8px; left:12px;
+    font-size:11px; letter-spacing:0.2em; color:#9aa6a0;
+  }
+  .ad-leaderboard{ width:100%; max-width:728px; height:90px; margin:0 auto; }
+  .ad-leaderboard-wrap{ padding:20px 28px 0; max-width:1280px; margin:0 auto; }
+  .ad-half-page{ width:300px; height:600px; margin:0 auto; }
+
+  .page{
+    max-width:1280px; margin:0 auto;
+    padding:24px 28px 80px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 320px;
+    gap:32px;
+  }
+
+  .doc{ padding:36px 0 28px; }
+  .doc .eyebrow{
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--text-mute); margin-bottom:14px;
+  }
+  .doc h1{
+    font-size:42px; line-height:1.1; letter-spacing:-0.02em;
+    margin:0 0 8px; font-weight:700;
+  }
+  .doc .updated{
+    font-family:"JetBrains Mono", monospace; font-size:12px;
+    color:var(--text-mute); margin:0 0 26px;
+  }
+  .doc h2{ font-size:20px; margin:32px 0 10px; letter-spacing:-0.01em; }
+  .doc p, .doc li{ color:var(--text-dim); font-size:15px; line-height:1.65; }
+  .doc ul{ padding-left:20px; }
+  .doc li{ margin:6px 0; }
+  .doc strong{ color:var(--text); font-weight:600; }
+  .doc a.link{ color:var(--accent); border-bottom:1px solid color-mix(in oklab, var(--accent) 40%, transparent); }
+  .callout{
+    border-left:3px solid var(--accent);
+    background:var(--surface);
+    padding:14px 18px; border-radius:0 10px 10px 0;
+    margin:18px 0;
+    font-size:14.5px; color:var(--text-dim);
+  }
+
+  .sidebar{ display:flex; flex-direction:column; gap:20px; }
+  .sidebar-sticky{ position:sticky; top:84px; display:flex; flex-direction:column; gap:20px; }
+  .side-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .side-card h3{
+    margin:0 0 14px; font-size:13px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--text-mute); font-family:"JetBrains Mono", monospace; font-weight:500;
+  }
+  .toc a{
+    display:block; padding:7px 0; font-size:13px; color:var(--text-dim);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .toc a:last-child{ border-bottom:0; }
+  .toc a:hover{ color:var(--accent); }
+
+  footer{
+    max-width:1280px; margin:0 auto;
+    padding:32px 28px; color:var(--text-mute); font-size:12px;
+    border-top:1px solid var(--line-soft);
+    display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    font-family:"JetBrains Mono", monospace; letter-spacing:.06em;
+  }
+  footer a{ color:var(--text-dim); }
+  footer a:hover{ color:var(--accent); }
+
+  .lang-toggle{
+    display:inline-flex; gap:2px; padding:3px;
+    background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  }
+  .lang-toggle button{
+    background:transparent; border:0; cursor:pointer;
+    font-family:"JetBrains Mono", monospace; font-size:11px;
+    padding:5px 10px; color:var(--text-mute);
+    border-radius:6px; letter-spacing:0.08em; font-weight:500;
+    transition:color .15s, background .15s;
+  }
+  .lang-toggle button.active{ background:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .lang-toggle button:hover:not(.active){ color:var(--text); }
+
+  @media (max-width:1180px){
+    .page{ grid-template-columns:minmax(0,1fr) 280px; }
+    .ad-half-page{ width:100%; max-width:300px; }
+  }
+  @media (max-width:980px){
+    .page{ grid-template-columns:1fr; }
+    .sidebar-sticky{ position:static; }
+    .doc h1{ font-size:32px; }
+    .ad-half-page{ width:100%; max-width:300px; height:auto; aspect-ratio:1/2; }
+  }
+  @media (max-width:560px){
+    .ad-leaderboard{ height:60px; }
+    .ad-leaderboard-wrap{ padding:16px 16px 0; }
+    .page{ padding:16px 16px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="logo" href="WhereToWatch FC.html">
+      <span class="logo-mark">W</span>
+      <span class="logo-name">WhereToWatch <em>FC</em></span>
+    </a>
+    <span class="crumbs"><a href="WhereToWatch FC.html" data-i18n="crumbs.home">Início</a><span class="sep">/</span><span data-lang="pt">Privacidade</span><span data-lang="en" hidden>Privacy</span></span>
+    <div class="lang-toggle" role="group" aria-label="Idioma" style="margin-left:auto;">
+      <button data-lang-set="pt">PT</button>
+      <button data-lang-set="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="ad-leaderboard-wrap">
+  <div class="ad ad-leaderboard">Advertisement · 728 × 90</div>
+</div>
+
+<div class="page">
+  <main>
+    <section class="doc">
+      <div class="eyebrow" data-i18n="privacy.eyebrow">Legal · Privacidade</div>
+
+      <div data-lang="pt">
+        <h1>Política de Privacidade</h1>
+        <p class="updated">Última atualização: 27 de abril de 2026</p>
+
+        <p>Esta página explica quais informações o WhereToWatch FC coleta quando você visita o site, como elas são usadas e quais escolhas você tem. O site é mantido como um projeto independente — não há cadastros, comentários, newsletters, ou qualquer recurso que peça você digitar dados pessoais.</p>
+
+        <h2 id="data-pt">1. Dados que coletamos diretamente</h2>
+        <p><strong>Nenhum.</strong> Não temos login, formulários de contato no site, nem analytics que identifiquem visitantes. O site é um conjunto estático de páginas HTML. A única troca de dados conosco é a requisição HTTP padrão que seu navegador envia — endereço IP, user-agent, referrer — que o provedor de hospedagem pode reter por curto prazo para segurança e prevenção de abuso.</p>
+
+        <h2 id="ads-pt">2. Publicidade (Google AdSense)</h2>
+        <p>O site exibe anúncios servidos pelo Google AdSense. O Google e seus parceiros podem usar cookies ou tecnologias semelhantes para:</p>
+        <ul>
+          <li>Mostrar anúncios baseados em suas visitas anteriores a este e a outros sites</li>
+          <li>Mensurar o desempenho dos anúncios (cliques, impressões, visibilidade)</li>
+          <li>Detectar e prevenir fraude publicitária</li>
+        </ul>
+        <p>Você pode revisar e ajustar como o Google personaliza anúncios em <a class="link" href="https://adssettings.google.com" target="_blank" rel="noopener">adssettings.google.com</a>. Para optar por não usar cookies de fornecedores terceiros em geral, veja <a class="link" href="https://www.aboutads.info" target="_blank" rel="noopener">aboutads.info</a>. Seu navegador também permite bloquear ou apagar cookies a qualquer momento — fazer isso não quebra o site, já que nada do nosso conteúdo depende deles.</p>
+
+        <div class="callout">
+          Não passamos seus dados a anunciantes diretamente. Não vendemos informações de visitantes. A única relação publicitária neste site é com o Google AdSense, regida pela <a class="link" href="https://policies.google.com/privacy" target="_blank" rel="noopener">política de privacidade do Google</a>.
+        </div>
+
+        <h2 id="cookies-pt">3. Cookies</h2>
+        <p>O WhereToWatch FC em si não define nenhum cookie próprio. Cookies que você pode encontrar vêm do Google AdSense (veja a seção 2). Se você já usou serviços do Google antes, é possível que esses cookies já estejam no seu navegador independentemente desta visita.</p>
+
+        <h2 id="children-pt">4. Crianças</h2>
+        <p>O site é de público geral e não coleta intencionalmente dados de crianças menores de 13 anos (ou idade mínima equivalente na sua jurisdição). Se você acredita que uma criança forneceu dados pessoais por algum meio, entre em contato para que possamos resolver.</p>
+
+        <h2 id="rights-pt">5. Seus direitos</h2>
+        <p>Dependendo da sua jurisdição (LGPD, GDPR, CCPA, etc.) você pode ter direito de acessar, corrigir ou solicitar exclusão de dados pessoais sobre você. Como não detemos dados pessoais diretamente, requisições normalmente devem ser dirigidas ao Google para cookies relacionados a publicidade. Podemos te orientar — veja a página de Contato.</p>
+
+        <h2 id="changes-pt">6. Mudanças nesta política</h2>
+        <p>Se nossas práticas mudarem, atualizamos esta página e a data de "Última atualização" acima. Não enviamos email avisando das mudanças porque não temos como — não coletamos seu email.</p>
+
+        <h2 id="contact-pt">7. Contato</h2>
+        <p>Dúvidas sobre privacidade? Veja a <a class="link" href="contact.html">página de contato</a>.</p>
+      </div>
+
+      <div data-lang="en" hidden>
+        <h1>Privacy Policy</h1>
+        <p class="updated">Last updated: 27 April 2026</p>
+
+        <p>This page explains what information WhereToWatch FC collects when you visit the site, how it is used, and the choices available to you. The site is operated as an independent project — it does not run user accounts, comment systems, newsletters, or any feature that asks you to type personal information.</p>
+
+        <h2 id="data">1. Data we collect directly</h2>
+        <p><strong>None.</strong> We don't operate logins, contact forms, or analytics that personally identify visitors. The site is a static set of HTML pages. The only data exchanged with us is the standard HTTP request your browser sends — IP address, user-agent string, referrer — which our hosting provider may retain for short-term security and abuse prevention.</p>
+
+        <h2 id="ads">2. Advertising (Google AdSense)</h2>
+        <p>This site displays advertisements served by Google AdSense. Google and its partners may use cookies or similar technologies to:</p>
+        <ul>
+          <li>Show ads based on your prior visits to this site or other sites</li>
+          <li>Measure ad performance (clicks, impressions, viewability)</li>
+          <li>Detect and prevent fraudulent ad activity</li>
+        </ul>
+        <p>You can review and adjust how Google personalizes ads at <a class="link" href="https://adssettings.google.com" target="_blank" rel="noopener">adssettings.google.com</a>. To opt out of third-party vendor cookie use generally, see <a class="link" href="https://www.aboutads.info" target="_blank" rel="noopener">aboutads.info</a>. Your browser also lets you block or delete cookies at any time — doing so will not break this site, since none of our content depends on cookies.</p>
+
+        <div class="callout">
+          We do not pass your data to advertisers ourselves. We do not sell visitor information. The only advertising relationship on this site is with Google AdSense, governed by <a class="link" href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's privacy policy</a>.
+        </div>
+
+        <h2 id="cookies">3. Cookies</h2>
+        <p>WhereToWatch FC itself sets no first-party cookies. Cookies you may encounter come from Google AdSense (see section 2). If you've previously interacted with Google services, those cookies may already be in your browser independent of this visit.</p>
+
+        <h2 id="children">4. Children</h2>
+        <p>The site is general-audience and does not knowingly collect data from children under 13 (or the equivalent minimum age in your jurisdiction). If you believe a child has provided personal information through any means, please contact us so we can address it.</p>
+
+        <h2 id="rights">5. Your rights</h2>
+        <p>Depending on your jurisdiction (LGPD, GDPR, CCPA, etc.) you may have the right to access, correct, or request deletion of personal data held about you. Since we do not directly hold personal data, requests typically need to be directed to Google for ad-related cookies. We're happy to point you in the right direction — see Contact.</p>
+
+        <h2 id="changes">6. Changes to this policy</h2>
+        <p>If our practices change, we'll update this page and the "Last updated" date above. We don't email visitors about policy changes because we have no way to email them.</p>
+
+        <h2 id="contact-en">7. Contact</h2>
+        <p>Questions about privacy on this site? See the <a class="link" href="contact.html">contact page</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <aside class="sidebar">
+    <div class="sidebar-sticky">
+      <div class="ad ad-half-page">Advertisement · 300 × 600</div>
+      <div class="side-card toc" data-lang="pt">
+        <h3>Nesta página</h3>
+        <a href="#data-pt">1. Dados coletados</a>
+        <a href="#ads-pt">2. Publicidade</a>
+        <a href="#cookies-pt">3. Cookies</a>
+        <a href="#children-pt">4. Crianças</a>
+        <a href="#rights-pt">5. Seus direitos</a>
+        <a href="#changes-pt">6. Mudanças</a>
+        <a href="#contact-pt">7. Contato</a>
+      </div>
+      <div class="side-card toc" data-lang="en" hidden>
+        <h3>On this page</h3>
+        <a href="#data">1. Data we collect</a>
+        <a href="#ads">2. Advertising</a>
+        <a href="#cookies">3. Cookies</a>
+        <a href="#children">4. Children</a>
+        <a href="#rights">5. Your rights</a>
+        <a href="#changes">6. Changes</a>
+        <a href="#contact-en">7. Contact</a>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span data-i18n="footer.tagline">© 2026 WhereToWatch FC · Guia independente de transmissões</span>
+  <span><a href="about.html" data-i18n="footer.about">Sobre</a> · <a href="networks/index.html" data-i18n="footer.networks">Canais</a> · <a href="privacy.html" data-i18n="footer.privacy">Privacidade</a> · <a href="contact.html" data-i18n="footer.contact">Contato</a></span>
+</footer>
+
+<script src="i18n.js"></script>
+<script>I18N.apply();</script>
+
+</body>
+</html>
