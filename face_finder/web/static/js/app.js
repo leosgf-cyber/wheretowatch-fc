@@ -169,17 +169,43 @@ async function scanFolderFiles(input) {
     '<span id="scanStatusText">Enviando ' + imageCount + ' imagens...</span>' +
     '<span id="scanPercent">0%</span></div></div>';
 
-  var res = await fetch("/api/scan-folder", { method: "POST", body: formData });
-  var data = await res.json();
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/scan-folder");
 
-  if (data.error) {
+  xhr.upload.onprogress = function (e) {
+    if (e.lengthComputable) {
+      var pct = Math.round((e.loaded / e.total) * 100);
+      var fill = document.getElementById("scanFill");
+      var text = document.getElementById("scanStatusText");
+      var pctEl = document.getElementById("scanPercent");
+      if (fill) fill.style.width = pct + "%";
+      if (pctEl) pctEl.textContent = pct + "%";
+      var mb = (e.loaded / (1024 * 1024)).toFixed(0);
+      var totalMb = (e.total / (1024 * 1024)).toFixed(0);
+      if (text) text.textContent = "Enviando: " + mb + " / " + totalMb + " MB";
+    }
+  };
+
+  xhr.onload = function () {
+    var data = JSON.parse(xhr.responseText);
+    if (data.error) {
+      document.getElementById("scanProgress").textContent = "";
+      alert(data.error);
+      return;
+    }
+    currentScanId = data.scan_id;
+    document.getElementById("scanStatusText").textContent = "Detectando rostos...";
+    document.getElementById("scanFill").style.width = "0%";
+    document.getElementById("scanPercent").textContent = "0%";
+    pollScan(data.scan_id);
+  };
+
+  xhr.onerror = function () {
     document.getElementById("scanProgress").textContent = "";
-    alert(data.error);
-    return;
-  }
+    alert("Erro ao enviar imagens.");
+  };
 
-  currentScanId = data.scan_id;
-  pollScan(data.scan_id);
+  xhr.send(formData);
   input.value = "";
 }
 
