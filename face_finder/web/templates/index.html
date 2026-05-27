@@ -16,29 +16,78 @@
     <!-- CADASTRO DE PESSOAS -->
     <div class="section">
       <h2>1. Cadastrar Pessoas</h2>
-      <div class="form-row">
-        <div class="form-group" style="flex:1">
-          <label>Nome / Papel</label>
-          <input type="text" id="personName" placeholder="Ex: Pai da Noiva">
-        </div>
-        <label class="btn-upload" for="personPhotos">
-          Selecionar fotos
-        </label>
-        <input type="file" id="personPhotos" multiple accept="image/*">
-        <button class="btn btn-primary" id="addPersonBtn" onclick="addPerson()">Adicionar</button>
+
+      <div class="tab-bar">
+        <button class="tab active" onclick="switchTab('people', 'manual', this)">Upload manual</button>
+        <button class="tab" onclick="switchTab('people', 'folder', this)">Apontar pasta</button>
       </div>
-      <div id="selectedFiles" style="font-size:12px; color:#888; margin-bottom:8px;"></div>
+
+      <!-- Upload manual -->
+      <div id="people-manual" class="tab-content active">
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Nome / Papel</label>
+            <input type="text" id="personName" placeholder="Ex: Pai da Noiva">
+          </div>
+          <label class="btn-upload" for="personPhotos">
+            Selecionar fotos
+          </label>
+          <input type="file" id="personPhotos" multiple accept="image/*">
+          <button class="btn btn-primary" id="addPersonBtn" onclick="addPerson()">Adicionar</button>
+        </div>
+        <div id="selectedFiles" style="font-size:12px; color:#888; margin-bottom:8px;"></div>
+      </div>
+
+      <!-- Apontar pasta -->
+      <div id="people-folder" class="tab-content">
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Caminho da pasta</label>
+            <input type="text" id="refFolderPath" placeholder="/Users/leosgf/fotos_casamento/convidados">
+          </div>
+          <button class="btn btn-primary" id="scanFolderBtn" onclick="scanFolder()">Escanear</button>
+        </div>
+        <div id="scanProgress" style="font-size:13px; color:#888; margin-top:8px;"></div>
+      </div>
+
+      <!-- Clustering UI -->
+      <div id="clusteringSection" class="clustering-section" style="display:none;">
+        <h3 style="margin-bottom:12px; color:#fff;">Rostos encontrados — nomeie cada pessoa:</h3>
+        <div id="clusterGrid" class="cluster-grid"></div>
+        <button class="btn btn-primary" style="margin-top:12px;" onclick="confirmClusters()">Confirmar todos</button>
+      </div>
+
       <div id="peopleGrid" class="people-grid"></div>
       <div id="peopleEmpty" class="empty-state">Nenhuma pessoa cadastrada ainda.</div>
     </div>
 
     <!-- UPLOAD DE VÍDEOS -->
     <div class="section">
-      <h2>2. Subir Vídeos</h2>
-      <div class="video-upload-area" id="videoArea" onclick="document.getElementById('videoFile').click()">
-        <p id="videoLabel">Clique para selecionar vídeos (pode selecionar vários)</p>
-        <input type="file" id="videoFile" multiple accept="video/*" onchange="uploadVideos(this)">
+      <h2>2. Vídeos</h2>
+
+      <div class="tab-bar">
+        <button class="tab active" onclick="switchTab('videos', 'upload', this)">Upload</button>
+        <button class="tab" onclick="switchTab('videos', 'vfolder', this)">Apontar pasta</button>
       </div>
+
+      <div id="videos-upload" class="tab-content active">
+        <div class="video-upload-area" id="videoArea" onclick="document.getElementById('videoFile').click()">
+          <p id="videoLabel">Clique para selecionar vídeos (pode selecionar vários)</p>
+          <input type="file" id="videoFile" multiple accept="video/*" onchange="uploadVideos(this)">
+        </div>
+      </div>
+
+      <div id="videos-vfolder" class="tab-content">
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Caminho da pasta</label>
+            <input type="text" id="videoFolderPath" placeholder="/Users/leosgf/videos_casamento">
+          </div>
+          <button class="btn btn-primary" onclick="loadVideoFolder()">Carregar</button>
+        </div>
+        <div id="videoFolderProgress" style="font-size:13px; color:#888; margin-top:8px;"></div>
+      </div>
+
       <div id="videosGrid" class="videos-grid"></div>
       <div id="videosEmpty" class="empty-state">Nenhum vídeo carregado ainda.</div>
     </div>

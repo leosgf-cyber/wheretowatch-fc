@@ -1,4 +1,5 @@
 let currentJobId = null;
+let currentScanId = null;
 
 document.getElementById("personPhotos").addEventListener("change", function () {
   const count = this.files.length;
@@ -8,6 +9,22 @@ document.getElementById("personPhotos").addEventListener("change", function () {
 
 loadPeople();
 loadVideos();
+
+// ========== TABS ==========
+
+function switchTab(section, tab, btn) {
+  var prefix = section === "people" ? "people-" : "videos-";
+  var tabs = btn.parentElement.querySelectorAll(".tab");
+  tabs.forEach(function (t) { t.classList.remove("active"); });
+  btn.classList.add("active");
+
+  var parent = btn.closest(".section");
+  var contents = parent.querySelectorAll(".tab-content");
+  contents.forEach(function (c) { c.classList.remove("active"); });
+
+  var target = document.getElementById(prefix + tab);
+  if (target) target.classList.add("active");
+}
 
 // ========== PEOPLE ==========
 
@@ -98,6 +115,101 @@ async function deletePerson(name) {
   loadPeople();
 }
 
+// ========== FOLDER SCAN ==========
+
+async function scanFolder() {
+  const pathInput = document.getElementById("refFolderPath");
+  const folderPath = pathInput.value.trim();
+  if (!folderPath) {
+    alert("Digite o caminho da pasta.");
+    return;
+  }
+
+  const btn = document.getElementById("scanFolderBtn");
+  btn.disabled = true;
+  btn.textContent = "Escaneando...";
+  document.getElementById("scanProgress").textContent = "Detectando rostos na pasta...";
+
+  const res = await fetch("/api/scan-folder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: folderPath }),
+  });
+  const data = await res.json();
+
+  btn.disabled = false;
+  btn.textContent = "Escanear";
+
+  if (data.error) {
+    document.getElementById("scanProgress").textContent = "";
+    alert(data.error);
+    return;
+  }
+
+  currentScanId = data.scan_id;
+  document.getElementById("scanProgress").textContent =
+    data.faces.length + " pessoa(s) unica(s) detectada(s). Nomeie abaixo:";
+
+  showClusters(data.scan_id, data.faces);
+}
+
+function showClusters(scanId, faces) {
+  const section = document.getElementById("clusteringSection");
+  const grid = document.getElementById("clusterGrid");
+  section.style.display = "block";
+  grid.innerHTML = "";
+
+  faces.forEach(function (face) {
+    const card = document.createElement("div");
+    card.className = "cluster-card";
+    card.innerHTML =
+      '<img class="cluster-thumb" src="/api/scan-thumbs/' + scanId + '/' + face.thumb + '">' +
+      '<div class="cluster-info">' +
+      '<span class="count">' + face.photo_count + ' foto(s)</span>' +
+      '<input type="text" class="cluster-name-input" data-id="' + face.id +
+      '" placeholder="Nome desta pessoa">' +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+async function confirmClusters() {
+  if (!currentScanId) return;
+
+  const inputs = document.querySelectorAll(".cluster-name-input");
+  const assignments = [];
+
+  inputs.forEach(function (input) {
+    const name = input.value.trim();
+    if (name) {
+      assignments.push({ id: parseInt(input.dataset.id), name: name });
+    }
+  });
+
+  if (assignments.length === 0) {
+    alert("Nomeie pelo menos uma pessoa.");
+    return;
+  }
+
+  const res = await fetch("/api/confirm-people", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scan_id: currentScanId, assignments: assignments }),
+  });
+  const data = await res.json();
+
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+
+  document.getElementById("clusteringSection").style.display = "none";
+  document.getElementById("scanProgress").textContent =
+    data.saved + " foto(s) salva(s) como referência.";
+  currentScanId = null;
+  loadPeople();
+}
+
 // ========== VIDEOS ==========
 
 async function loadVideos() {
@@ -162,6 +274,34 @@ async function uploadVideos(input) {
 async function deleteVideo(filename) {
   if (!confirm("Remover este vídeo?")) return;
   await fetch("/api/videos/" + encodeURIComponent(filename), { method: "DELETE" });
+  loadVideos();
+}
+
+async function loadVideoFolder() {
+  const pathInput = document.getElementById("videoFolderPath");
+  const folderPath = pathInput.value.trim();
+  if (!folderPath) {
+    alert("Digite o caminho da pasta.");
+    return;
+  }
+
+  document.getElementById("videoFolderProgress").textContent = "Carregando vídeos...";
+
+  const res = await fetch("/api/load-videos-folder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: folderPath }),
+  });
+  const data = await res.json();
+
+  if (data.error) {
+    document.getElementById("videoFolderProgress").textContent = "";
+    alert(data.error);
+    return;
+  }
+
+  document.getElementById("videoFolderProgress").textContent =
+    data.count + " video(s) carregado(s).";
   loadVideos();
 }
 

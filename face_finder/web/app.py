@@ -12,7 +12,10 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from extractor import extract_frames
-from scanner import load_references, scan_frames
+from scanner import load_references, scan_frames, _get_detector_and_encoder, _crop_face
+
+import cv2
+import numpy as np
 
 app = Flask(__name__)
 
@@ -130,6 +133,161 @@ def delete_video(filename):
         video_path.unlink()
         return jsonify({"deleted": filename})
     return jsonify({"error": "Vídeo não encontrado"}), 404
+
+
+pending_clusters = {}
+
+
+@app.route("/api/scan-folder", methods=["POST"])
+def scan_folder():
+    folder = request.json.get("path", "").strip()
+    if not folder:
+        return jsonify({"error": "Caminho da pasta é obrigatório"}), 400
+
+    folder_path = Path(folder).expanduser()
+    if not folder_path.exists() or not folder_path.is_dir():
+        return jsonify({"error": f"Pasta não encontrada: {folder}"}), 400
+
+    extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+    images = [f for f in sorted(folder_path.iterdir())
+              if f.is_file() and f.suffix.lower() in extensions]
+
+    if not images:
+        return jsonify({"error": "Nenhuma imagem encontrada na pasta"}), 400
+
+    detector, shape_predictor, face_encoder = _get_detector_and_encoder()
+
+    faces = []
+    for img_path in images:
+        img = cv2.imread(str(img_path))
+        if img is None:
+            continue
+        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        detected = detector(rgb, 1)
+        for face_rect in detected:
+            shape = shape_predictor(rgb, face_rect)
+            encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+            crop = _crop_face(img, face_rect, padding=0.4)
+            faces.append({"encoding": encoding, "crop": crop, "source": img_path.name})
+
+    if not faces:
+        return jsonify({"error": "Nenhum rosto detectado nas imagens"}), 400
+
+    clusters = []
+    tolerance = 0.6
+    for face in faces:
+        matched = False
+        for cluster in clusters:
+            rep_enc = cluster["encodings"][0]
+            dist = np.linalg.norm(rep_enc - face["encoding"])
+            if dist <= tolerance:
+                cluster["encodings"].append(face["encoding"])
+                cluster["sources"].append(face["source"])
+                matched = True
+                break
+        if not matched:
+            clusters.append({
+                "encodings": [face["encoding"]],
+                "crop": face["crop"],
+                "sources": [face["source"]],
+            })
+
+    scan_id = uuid.uuid4().hex[:8]
+    thumbs_dir = RESULTS_DIR / f"scan_{scan_id}"
+    thumbs_dir.mkdir(parents=True, exist_ok=True)
+
+    cluster_data = []
+    for i, cluster in enumerate(clusters):
+        thumb_name = f"face_{i}.jpg"
+        cv2.imwrite(str(thumbs_dir / thumb_name), cluster["crop"])
+        cluster_data.append({
+            "id": i,
+            "thumb": thumb_name,
+            "photo_count": len(cluster["sources"]),
+            "sources": list(set(cluster["sources"]))[:3],
+        })
+
+    pending_clusters[scan_id] = {
+        "folder": str(folder_path),
+        "clusters": clusters,
+    }
+
+    return jsonify({"scan_id": scan_id, "faces": cluster_data})
+
+
+@app.route("/api/scan-thumbs/<scan_id>/<filename>")
+def get_scan_thumb(scan_id, filename):
+    thumbs_path = RESULTS_DIR / f"scan_{scan_id}"
+    if thumbs_path.exists():
+        return send_from_directory(str(thumbs_path), filename)
+    return jsonify({"error": "Não encontrado"}), 404
+
+
+@app.route("/api/confirm-people", methods=["POST"])
+def confirm_people():
+    scan_id = request.json.get("scan_id", "")
+    assignments = request.json.get("assignments", [])
+
+    if scan_id not in pending_clusters:
+        return jsonify({"error": "Scan não encontrado"}), 404
+
+    scan_data = pending_clusters[scan_id]
+    clusters = scan_data["clusters"]
+    folder_path = Path(scan_data["folder"])
+
+    extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+    saved_count = 0
+
+    for assignment in assignments:
+        cluster_id = assignment.get("id")
+        name = assignment.get("name", "").strip()
+        if not name or cluster_id is None or cluster_id >= len(clusters):
+            continue
+
+        person_dir = REFERENCES_DIR / name
+        person_dir.mkdir(parents=True, exist_ok=True)
+
+        cluster = clusters[cluster_id]
+        sources = set(cluster["sources"])
+
+        idx = 0
+        for src in sources:
+            src_path = folder_path / src
+            if src_path.exists():
+                ext = src_path.suffix.lower()
+                dest = person_dir / f"{name}_{idx + 1}{ext}"
+                shutil.copy2(str(src_path), str(dest))
+                idx += 1
+                saved_count += 1
+
+    del pending_clusters[scan_id]
+    return jsonify({"saved": saved_count})
+
+
+@app.route("/api/load-videos-folder", methods=["POST"])
+def load_videos_folder():
+    folder = request.json.get("path", "").strip()
+    if not folder:
+        return jsonify({"error": "Caminho da pasta é obrigatório"}), 400
+
+    folder_path = Path(folder).expanduser()
+    if not folder_path.exists() or not folder_path.is_dir():
+        return jsonify({"error": f"Pasta não encontrada: {folder}"}), 400
+
+    video_exts = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
+    loaded = []
+
+    for f in sorted(folder_path.iterdir()):
+        if f.is_file() and f.suffix.lower() in video_exts:
+            dest = VIDEOS_DIR / f.name
+            if not dest.exists():
+                shutil.copy2(str(f), str(dest))
+            loaded.append(f.name)
+
+    if not loaded:
+        return jsonify({"error": "Nenhum vídeo encontrado na pasta"}), 400
+
+    return jsonify({"loaded": loaded, "count": len(loaded)})
 
 
 @app.route("/api/process", methods=["POST"])
