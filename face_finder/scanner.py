@@ -16,28 +16,45 @@ def load_references(references_dir: str, tolerance: float = 0.6) -> dict:
     people = {}
     extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
-    for img_path in sorted(ref_dir.iterdir()):
-        if img_path.suffix.lower() not in extensions:
-            continue
+    subdirs = [d for d in ref_dir.iterdir() if d.is_dir()]
+    uses_folders = len(subdirs) > 0
 
-        name = img_path.stem.rsplit("_", 1)[0]
+    if uses_folders:
+        for person_dir in sorted(subdirs):
+            name = person_dir.name
+            for img_path in sorted(person_dir.iterdir()):
+                if img_path.suffix.lower() not in extensions:
+                    continue
+                _load_face(img_path, name, people)
+    else:
+        for img_path in sorted(ref_dir.iterdir()):
+            if img_path.suffix.lower() not in extensions:
+                continue
+            name = img_path.stem.rsplit("_", 1)[0]
+            _load_face(img_path, name, people)
 
-        img = face_recognition.load_image_file(str(img_path))
-        encodings = face_recognition.face_encodings(img)
-
-        if not encodings:
-            print(f"  Aviso: nenhum rosto encontrado em '{img_path.name}', pulando.")
-            continue
-
-        if name not in people:
-            people[name] = []
-        people[name].append(encodings[0])
+    if not people:
+        print("Erro: nenhum rosto de referência foi carregado.")
+        sys.exit(1)
 
     print(f"Referências carregadas: {len(people)} pessoa(s)")
     for name, encs in people.items():
         print(f"  - {name}: {len(encs)} foto(s)")
 
     return people
+
+
+def _load_face(img_path: Path, name: str, people: dict):
+    img = face_recognition.load_image_file(str(img_path))
+    encodings = face_recognition.face_encodings(img)
+
+    if not encodings:
+        print(f"  Aviso: nenhum rosto encontrado em '{img_path.name}', pulando.")
+        return
+
+    if name not in people:
+        people[name] = []
+    people[name].append(encodings[0])
 
 
 def scan_frames(
