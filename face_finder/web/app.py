@@ -110,10 +110,15 @@ def upload_videos():
     saved = []
     for v in files:
         if v.filename:
-            safe_name = f"{uuid.uuid4().hex[:8]}_{Path(v.filename).name}"
-            dest = VIDEOS_DIR / safe_name
+            original = Path(v.filename).name
+            dest = VIDEOS_DIR / original
+            if dest.exists():
+                stem = Path(v.filename).stem
+                ext = Path(v.filename).suffix
+                original = f"{stem}_{uuid.uuid4().hex[:4]}{ext}"
+                dest = VIDEOS_DIR / original
             v.save(str(dest))
-            saved.append(safe_name)
+            saved.append(original)
 
     return jsonify({"uploaded": saved})
 
