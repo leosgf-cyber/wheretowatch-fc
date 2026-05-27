@@ -172,8 +172,27 @@ input[type="file"] {
   border-radius: 8px;
   padding: 14px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
+}
+
+.person-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #333;
+}
+
+.person-thumb-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #2a2a2a;
+}
+
+.person-info {
+  flex: 1;
 }
 
 .person-card .name {
@@ -190,6 +209,35 @@ input[type="file"] {
   text-align: center;
   padding: 30px;
   color: #555;
+  font-size: 14px;
+}
+
+.videos-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.video-card {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.video-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a9eff;
   font-size: 14px;
 }
 
@@ -323,6 +371,53 @@ input[type="file"] {
   font-size: 12px;
   color: #ccc;
   font-family: monospace;
+}
+
+.match-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.match-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.match-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+
+.match-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.match-ts {
+  color: #ccc;
+  font-family: monospace;
+}
+
+.match-conf {
+  color: #4a9eff;
+  font-weight: 500;
+}
+
+.match-video {
+  padding: 0 8px 6px;
+  font-size: 10px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .no-results {

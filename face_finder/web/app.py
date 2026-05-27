@@ -40,8 +40,20 @@ def list_people():
         for person_dir in sorted(REFERENCES_DIR.iterdir()):
             if person_dir.is_dir():
                 photos = [f.name for f in person_dir.iterdir() if f.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}]
-                people.append({"name": person_dir.name, "photo_count": len(photos)})
+                if photos:
+                    first_photo = str(person_dir / photos[0])
+                    people.append({"name": person_dir.name, "photo_count": len(photos), "thumb": photos[0]})
+                else:
+                    people.append({"name": person_dir.name, "photo_count": 0, "thumb": None})
     return jsonify(people)
+
+
+@app.route("/api/people/<name>/photo/<filename>")
+def get_person_photo(name, filename):
+    person_dir = REFERENCES_DIR / name
+    if person_dir.exists():
+        return send_from_directory(str(person_dir), filename)
+    return jsonify({"error": "Não encontrado"}), 404
 
 
 @app.route("/api/people", methods=["POST"])
@@ -78,36 +90,80 @@ def delete_person(name):
     return jsonify({"error": "Pessoa não encontrada"}), 404
 
 
+@app.route("/api/videos", methods=["GET"])
+def list_videos():
+    vids = []
+    if VIDEOS_DIR.exists():
+        for f in sorted(VIDEOS_DIR.iterdir()):
+            if f.is_file() and f.suffix.lower() in {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}:
+                size_mb = round(f.stat().st_size / (1024 * 1024), 1)
+                vids.append({"filename": f.name, "original_name": f.stem, "size_mb": size_mb})
+    return jsonify(vids)
+
+
+@app.route("/api/videos", methods=["POST"])
+def upload_videos():
+    files = request.files.getlist("videos")
+    if not files or not files[0].filename:
+        return jsonify({"error": "Envie pelo menos um vídeo"}), 400
+
+    saved = []
+    for v in files:
+        if v.filename:
+            safe_name = f"{uuid.uuid4().hex[:8]}_{Path(v.filename).name}"
+            dest = VIDEOS_DIR / safe_name
+            v.save(str(dest))
+            saved.append(safe_name)
+
+    return jsonify({"uploaded": saved})
+
+
+@app.route("/api/videos/<filename>", methods=["DELETE"])
+def delete_video(filename):
+    video_path = VIDEOS_DIR / filename
+    if video_path.exists():
+        video_path.unlink()
+        return jsonify({"deleted": filename})
+    return jsonify({"error": "Vídeo não encontrado"}), 404
+
+
 @app.route("/api/process", methods=["POST"])
 def start_processing():
-    video = request.files.get("video")
-    if not video or not video.filename:
-        return jsonify({"error": "Envie um vídeo"}), 400
+    selected = request.json.get("videos", []) if request.is_json else []
+
+    if not selected:
+        return jsonify({"error": "Selecione pelo menos um vídeo"}), 400
 
     people_dirs = [d for d in REFERENCES_DIR.iterdir() if d.is_dir()]
     if not people_dirs:
         return jsonify({"error": "Cadastre pelo menos uma pessoa antes de processar"}), 400
 
     job_id = str(uuid.uuid4())[:8]
-    video_ext = Path(video.filename).suffix
-    video_path = VIDEOS_DIR / f"{job_id}{video_ext}"
-    video.save(str(video_path))
 
-    fps = float(request.form.get("fps", 1.0))
-    tolerance = float(request.form.get("tolerance", 0.6))
-    start = request.form.get("start") or None
-    end = request.form.get("end") or None
+    video_paths = []
+    video_names = []
+    for fname in selected:
+        vpath = VIDEOS_DIR / fname
+        if vpath.exists():
+            video_paths.append(str(vpath))
+            video_names.append(fname)
+
+    req_data = request.json if request.is_json else {}
+    fps = float(req_data.get("fps", 1.0))
+    tolerance = float(req_data.get("tolerance", 0.6))
+    start = req_data.get("start") or None
+    end = req_data.get("end") or None
 
     jobs[job_id] = {
         "status": "processing",
-        "progress": "Iniciando extração de frames...",
-        "video": video.filename,
+        "progress": "Iniciando...",
+        "videos": video_names,
         "results": None,
     }
 
     thread = threading.Thread(
         target=_process_job,
-        args=(job_id, str(video_path), fps, tolerance, start, end),
+        args=(job_id, video_paths, video_names, fps, tolerance, start, end),
         daemon=True,
     )
     thread.start()
@@ -115,35 +171,49 @@ def start_processing():
     return jsonify({"job_id": job_id})
 
 
-def _process_job(job_id, video_path, fps, tolerance, start, end):
+def _process_job(job_id, video_paths, video_names, fps, tolerance, start, end):
     try:
-        frames_dir = str(RESULTS_DIR / f"frames_{job_id}")
-
-        jobs[job_id]["progress"] = "Extraindo frames do vídeo..."
-        extract_frames(video_path, frames_dir, fps, start, end)
+        matches_dir = str(RESULTS_DIR / f"matches_{job_id}")
+        Path(matches_dir).mkdir(parents=True, exist_ok=True)
 
         jobs[job_id]["progress"] = "Carregando referências..."
         refs = load_references(str(REFERENCES_DIR), tolerance)
 
-        jobs[job_id]["progress"] = "Varrendo frames (isso pode demorar)..."
-        results = scan_frames(frames_dir, refs, tolerance, fps)
+        all_results = {}
+
+        for idx, (video_path, video_name) in enumerate(zip(video_paths, video_names)):
+            jobs[job_id]["progress"] = f"Extraindo frames: {video_name} ({idx + 1}/{len(video_paths)})..."
+            frames_dir = str(RESULTS_DIR / f"frames_{job_id}_{idx}")
+            extract_frames(video_path, frames_dir, fps, start, end)
+
+            jobs[job_id]["progress"] = f"Varrendo: {video_name} ({idx + 1}/{len(video_paths)})..."
+            results = scan_frames(frames_dir, refs, tolerance, fps, matches_dir)
+
+            for name, matches in results.items():
+                for m in matches:
+                    m["video"] = video_name
+                if name not in all_results:
+                    all_results[name] = []
+                all_results[name].extend(matches)
 
         result_path = RESULTS_DIR / f"{job_id}.json"
         with open(result_path, "w", encoding="utf-8") as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
+            json.dump(all_results, f, ensure_ascii=False, indent=2)
 
         summary = {}
-        for name, matches in results.items():
+        for name, matches in all_results.items():
             summary[name] = {
                 "total_appearances": len(matches),
                 "timestamps": [m["timestamp"] for m in matches],
+                "videos": list(set(m["video"] for m in matches)),
                 "avg_confidence": round(sum(m["confidence"] for m in matches) / len(matches), 3) if matches else 0,
+                "best_matches": matches[:6],
             }
 
         jobs[job_id]["status"] = "done"
         jobs[job_id]["progress"] = "Concluído!"
         jobs[job_id]["results"] = summary
-        jobs[job_id]["full_results"] = results
+        jobs[job_id]["full_results"] = all_results
 
     except Exception as e:
         jobs[job_id]["status"] = "error"
@@ -163,6 +233,14 @@ def download_results(job_id):
     if result_file.exists():
         return send_from_directory(str(RESULTS_DIR), f"{job_id}.json", as_attachment=True)
     return jsonify({"error": "Resultados não encontrados"}), 404
+
+
+@app.route("/api/matches/<job_id>/<filename>")
+def get_match_image(job_id, filename):
+    matches_path = RESULTS_DIR / f"matches_{job_id}"
+    if matches_path.exists():
+        return send_from_directory(str(matches_path), filename)
+    return jsonify({"error": "Não encontrado"}), 404
 
 
 if __name__ == "__main__":

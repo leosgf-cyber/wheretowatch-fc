@@ -7,6 +7,9 @@ document.getElementById("personPhotos").addEventListener("change", function () {
 });
 
 loadPeople();
+loadVideos();
+
+// ========== PEOPLE ==========
 
 async function loadPeople() {
   const res = await fetch("/api/people");
@@ -26,8 +29,17 @@ async function loadPeople() {
   people.forEach(function (p) {
     const card = document.createElement("div");
     card.className = "person-card";
+
+    let thumbHtml = '<div class="person-thumb-placeholder"></div>';
+    if (p.thumb) {
+      thumbHtml = '<img class="person-thumb" src="/api/people/' +
+        encodeURIComponent(p.name) + '/photo/' + encodeURIComponent(p.thumb) +
+        '" alt="' + escapeHtml(p.name) + '">';
+    }
+
     card.innerHTML =
-      '<div>' +
+      thumbHtml +
+      '<div class="person-info">' +
       '<div class="name">' + escapeHtml(p.name) + '</div>' +
       '<div class="count">' + p.photo_count + ' foto(s)</div>' +
       '</div>' +
@@ -86,34 +98,93 @@ async function deletePerson(name) {
   loadPeople();
 }
 
-function onVideoSelected(input) {
-  const area = document.getElementById("videoArea");
-  const label = document.getElementById("videoLabel");
-  if (input.files.length > 0) {
-    area.classList.add("has-file");
-    label.innerHTML = '<span class="filename">' + escapeHtml(input.files[0].name) + "</span>";
-  } else {
-    area.classList.remove("has-file");
-    label.textContent = "Clique para selecionar um vídeo";
-  }
-}
+// ========== VIDEOS ==========
 
-async function startProcessing() {
-  const videoInput = document.getElementById("videoFile");
-  if (videoInput.files.length === 0) {
-    alert("Selecione um vídeo.");
+async function loadVideos() {
+  const res = await fetch("/api/videos");
+  const videos = await res.json();
+  const grid = document.getElementById("videosGrid");
+  const empty = document.getElementById("videosEmpty");
+
+  grid.innerHTML = "";
+
+  if (videos.length === 0) {
+    empty.style.display = "block";
     return;
   }
 
-  const formData = new FormData();
-  formData.append("video", videoInput.files[0]);
-  formData.append("fps", document.getElementById("fpsInput").value);
-  formData.append("tolerance", document.getElementById("toleranceInput").value);
+  empty.style.display = "none";
 
-  const start = document.getElementById("startInput").value.trim();
-  const end = document.getElementById("endInput").value.trim();
-  if (start) formData.append("start", start);
-  if (end) formData.append("end", end);
+  videos.forEach(function (v) {
+    const card = document.createElement("div");
+    card.className = "video-card";
+    card.innerHTML =
+      '<div class="video-icon">&#9654;</div>' +
+      '<div class="person-info">' +
+      '<div class="name">' + escapeHtml(v.filename) + '</div>' +
+      '<div class="count">' + v.size_mb + ' MB</div>' +
+      '</div>' +
+      '<button class="btn btn-danger" onclick="deleteVideo(\'' +
+      escapeHtml(v.filename).replace(/'/g, "\\'") +
+      '\')">Remover</button>';
+    grid.appendChild(card);
+  });
+}
+
+async function uploadVideos(input) {
+  if (input.files.length === 0) return;
+
+  const area = document.getElementById("videoArea");
+  const label = document.getElementById("videoLabel");
+  label.innerHTML = '<span class="filename">Enviando ' + input.files.length + ' video(s)...</span>';
+  area.classList.add("has-file");
+
+  const formData = new FormData();
+  for (let i = 0; i < input.files.length; i++) {
+    formData.append("videos", input.files[i]);
+  }
+
+  const res = await fetch("/api/videos", { method: "POST", body: formData });
+  const data = await res.json();
+
+  label.textContent = "Clique para selecionar vídeos (pode selecionar vários)";
+  area.classList.remove("has-file");
+  input.value = "";
+
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+
+  loadVideos();
+}
+
+async function deleteVideo(filename) {
+  if (!confirm("Remover este vídeo?")) return;
+  await fetch("/api/videos/" + encodeURIComponent(filename), { method: "DELETE" });
+  loadVideos();
+}
+
+// ========== PROCESSING ==========
+
+async function startProcessing() {
+  const res1 = await fetch("/api/videos");
+  const videos = await res1.json();
+
+  if (videos.length === 0) {
+    alert("Suba pelo menos um vídeo antes de processar.");
+    return;
+  }
+
+  const videoFilenames = videos.map(function (v) { return v.filename; });
+
+  const payload = {
+    videos: videoFilenames,
+    fps: parseFloat(document.getElementById("fpsInput").value),
+    tolerance: parseFloat(document.getElementById("toleranceInput").value),
+    start: document.getElementById("startInput").value.trim() || null,
+    end: document.getElementById("endInput").value.trim() || null,
+  };
 
   const btn = document.getElementById("processBtn");
   btn.disabled = true;
@@ -124,13 +195,17 @@ async function startProcessing() {
 
   document.getElementById("resultsSection").classList.remove("visible");
 
-  const res = await fetch("/api/process", { method: "POST", body: formData });
+  const res = await fetch("/api/process", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
   const data = await res.json();
 
   if (data.error) {
     alert(data.error);
     btn.disabled = false;
-    btn.textContent = "Processar Vídeo";
+    btn.textContent = "Processar Vídeos";
     progressBar.classList.remove("active");
     return;
   }
@@ -148,7 +223,7 @@ function pollJob(jobId) {
 
     if (job.status === "done") {
       clearInterval(interval);
-      showResults(job);
+      showResults(job, jobId);
       resetProcessButton();
     } else if (job.status === "error") {
       clearInterval(interval);
@@ -161,17 +236,19 @@ function pollJob(jobId) {
 function resetProcessButton() {
   const btn = document.getElementById("processBtn");
   btn.disabled = false;
-  btn.textContent = "Processar Vídeo";
+  btn.textContent = "Processar Vídeos";
   document.getElementById("progressBar").classList.remove("active");
 }
 
-function showResults(job) {
+// ========== RESULTS ==========
+
+function showResults(job, jobId) {
   const section = document.getElementById("resultsSection");
   const container = document.getElementById("resultsContainer");
   section.classList.add("visible");
 
   if (!job.results || Object.keys(job.results).length === 0) {
-    container.innerHTML = '<div class="no-results">Nenhuma pessoa identificada nos frames do vídeo.</div>';
+    container.innerHTML = '<div class="no-results">Nenhuma pessoa identificada nos frames.</div>';
     return;
   }
 
@@ -180,8 +257,8 @@ function showResults(job) {
 
   names.forEach(function (name) {
     const data = job.results[name];
-    const timestamps = data.timestamps || [];
-    const shown = timestamps.slice(0, 30);
+    const bestMatches = data.best_matches || [];
+    const videos = data.videos || [];
 
     html +=
       '<div class="result-person">' +
@@ -189,18 +266,53 @@ function showResults(job) {
       '<span class="result-name">' + escapeHtml(name) + "</span>" +
       '<span class="result-count">' + data.total_appearances + " aparicao(oes)</span>" +
       "</div>" +
-      '<div class="result-confidence">Confianca media: ' + (data.avg_confidence * 100).toFixed(1) + "%</div>" +
-      '<div class="timestamps-list">';
+      '<div class="result-confidence">Confianca media: ' +
+      (data.avg_confidence * 100).toFixed(1) + "%";
 
-    shown.forEach(function (ts) {
-      html += '<span class="timestamp-tag">' + ts + "</span>";
-    });
-
-    if (timestamps.length > 30) {
-      html += '<span class="timestamp-tag">+' + (timestamps.length - 30) + " mais</span>";
+    if (videos.length > 1) {
+      html += " | Em " + videos.length + " videos";
     }
 
-    html += "</div></div>";
+    html += "</div>";
+
+    if (bestMatches.length > 0) {
+      html += '<div class="match-grid">';
+      bestMatches.forEach(function (m) {
+        var imgSrc = m.match_image
+          ? "/api/matches/" + jobId + "/" + m.match_image
+          : "";
+
+        html += '<div class="match-card">';
+        if (imgSrc) {
+          html += '<img class="match-img" src="' + imgSrc + '" alt="match">';
+        }
+        html +=
+          '<div class="match-info">' +
+          '<span class="match-ts">' + m.timestamp + "</span>" +
+          '<span class="match-conf">' + (m.confidence * 100).toFixed(0) + "%</span>" +
+          "</div>";
+        if (m.video) {
+          html += '<div class="match-video">' + escapeHtml(m.video) + "</div>";
+        }
+        html += "</div>";
+      });
+      html += "</div>";
+    }
+
+    var timestamps = data.timestamps || [];
+    if (timestamps.length > 6) {
+      html += '<div class="timestamps-list">';
+      var remaining = timestamps.slice(6, 36);
+      remaining.forEach(function (ts) {
+        html += '<span class="timestamp-tag">' + ts + "</span>";
+      });
+      if (timestamps.length > 36) {
+        html += '<span class="timestamp-tag">+' + (timestamps.length - 36) + " mais</span>";
+      }
+      html += "</div>";
+    }
+
+    html += "</div>";
   });
 
   container.innerHTML = html;

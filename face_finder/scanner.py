@@ -115,6 +115,7 @@ def scan_frames(
     references: dict,
     tolerance: float = 0.6,
     fps: float = 1.0,
+    matches_dir: str | None = None,
 ) -> dict:
     frames_path = Path(frames_dir)
     frame_files = sorted(frames_path.glob("frame_*.jpg"))
@@ -122,6 +123,9 @@ def scan_frames(
     if not frame_files:
         print(f"Nenhum frame encontrado em '{frames_dir}'")
         return {}
+
+    if matches_dir:
+        Path(matches_dir).mkdir(parents=True, exist_ok=True)
 
     print(f"\nVarrendo {len(frame_files)} frames...")
 
@@ -140,6 +144,8 @@ def scan_frames(
     for name in references:
         results[name] = []
 
+    match_counter = 0
+
     for i, frame_file in enumerate(frame_files):
         if (i + 1) % 50 == 0 or i == 0:
             print(f"  Processando frame {i + 1}/{len(frame_files)}...")
@@ -149,9 +155,14 @@ def scan_frames(
             continue
 
         rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        face_encodings = _encode_faces(rgb, detector, shape_predictor, face_encoder)
+        faces = detector(rgb, 1)
+        face_encodings = []
+        for face in faces:
+            shape = shape_predictor(rgb, face)
+            encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+            face_encodings.append((encoding, face))
 
-        for face_enc in face_encodings:
+        for face_enc, face_rect in face_encodings:
             distances = np.linalg.norm(all_known_encodings - face_enc, axis=1)
             best_idx = np.argmin(distances)
 
@@ -168,11 +179,33 @@ def scan_frames(
                     "confidence": round(1 - float(distances[best_idx]), 3),
                 }
 
+                if matches_dir:
+                    match_img = _crop_face(img, face_rect, padding=0.5)
+                    match_filename = f"match_{match_counter:04d}.jpg"
+                    cv2.imwrite(str(Path(matches_dir) / match_filename), match_img)
+                    entry["match_image"] = match_filename
+                    match_counter += 1
+
                 if entry not in results[matched_name]:
                     results[matched_name].append(entry)
 
     results = {name: matches for name, matches in results.items() if matches}
     return results
+
+
+def _crop_face(img, face_rect, padding=0.5):
+    h, w = img.shape[:2]
+    top, bottom = face_rect.top(), face_rect.bottom()
+    left, right = face_rect.left(), face_rect.right()
+    face_h = bottom - top
+    face_w = right - left
+    pad_h = int(face_h * padding)
+    pad_w = int(face_w * padding)
+    top = max(0, top - pad_h)
+    bottom = min(h, bottom + pad_h)
+    left = max(0, left - pad_w)
+    right = min(w, right + pad_w)
+    return img[top:bottom, left:right]
 
 
 def format_timestamp(seconds: float) -> str:
