@@ -1,10 +1,56 @@
 import json
 import sys
+import urllib.request
 from pathlib import Path
 
 import cv2
-import face_recognition
+import dlib
 import numpy as np
+
+MODELS_DIR = Path(__file__).resolve().parent / "models"
+SHAPE_PREDICTOR = MODELS_DIR / "shape_predictor_68_face_landmarks.dat"
+FACE_REC_MODEL = MODELS_DIR / "dlib_face_recognition_resnet_model_v1.dat"
+
+SHAPE_PREDICTOR_URL = "https://github.com/davisking/dlib-models/raw/master/shape_predictor_68_face_landmarks.dat.bz2"
+FACE_REC_MODEL_URL = "https://github.com/davisking/dlib-models/raw/master/dlib_face_recognition_resnet_model_v1.dat.bz2"
+
+
+def _ensure_models():
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
+    for model_path, url in [(SHAPE_PREDICTOR, SHAPE_PREDICTOR_URL), (FACE_REC_MODEL, FACE_REC_MODEL_URL)]:
+        if model_path.exists():
+            continue
+
+        bz2_path = model_path.with_suffix(".dat.bz2")
+        print(f"Baixando modelo: {model_path.name}...")
+        urllib.request.urlretrieve(url, str(bz2_path))
+
+        import bz2
+        with open(bz2_path, "rb") as f_in:
+            data = bz2.decompress(f_in.read())
+        with open(model_path, "wb") as f_out:
+            f_out.write(data)
+        bz2_path.unlink()
+        print(f"  Modelo salvo em '{model_path}'")
+
+
+def _get_detector_and_encoder():
+    _ensure_models()
+    detector = dlib.get_frontal_face_detector()
+    shape_predictor = dlib.shape_predictor(str(SHAPE_PREDICTOR))
+    face_encoder = dlib.face_recognition_model_v1(str(FACE_REC_MODEL))
+    return detector, shape_predictor, face_encoder
+
+
+def _encode_faces(img_rgb, detector, shape_predictor, face_encoder):
+    faces = detector(img_rgb, 1)
+    encodings = []
+    for face in faces:
+        shape = shape_predictor(img_rgb, face)
+        encoding = np.array(face_encoder.compute_face_descriptor(img_rgb, shape))
+        encodings.append(encoding)
+    return encodings
 
 
 def load_references(references_dir: str, tolerance: float = 0.6) -> dict:
@@ -12,6 +58,8 @@ def load_references(references_dir: str, tolerance: float = 0.6) -> dict:
     if not ref_dir.exists():
         print(f"Erro: pasta de referências não encontrada: {references_dir}")
         sys.exit(1)
+
+    detector, shape_predictor, face_encoder = _get_detector_and_encoder()
 
     people = {}
     extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
@@ -25,13 +73,13 @@ def load_references(references_dir: str, tolerance: float = 0.6) -> dict:
             for img_path in sorted(person_dir.iterdir()):
                 if img_path.suffix.lower() not in extensions:
                     continue
-                _load_face(img_path, name, people)
+                _load_face(img_path, name, people, detector, shape_predictor, face_encoder)
     else:
         for img_path in sorted(ref_dir.iterdir()):
             if img_path.suffix.lower() not in extensions:
                 continue
             name = img_path.stem.rsplit("_", 1)[0]
-            _load_face(img_path, name, people)
+            _load_face(img_path, name, people, detector, shape_predictor, face_encoder)
 
     if not people:
         print("Erro: nenhum rosto de referência foi carregado.")
@@ -44,9 +92,14 @@ def load_references(references_dir: str, tolerance: float = 0.6) -> dict:
     return people
 
 
-def _load_face(img_path: Path, name: str, people: dict):
-    img = face_recognition.load_image_file(str(img_path))
-    encodings = face_recognition.face_encodings(img)
+def _load_face(img_path, name, people, detector, shape_predictor, face_encoder):
+    img = cv2.imread(str(img_path))
+    if img is None:
+        print(f"  Aviso: não foi possível ler '{img_path.name}', pulando.")
+        return
+
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    encodings = _encode_faces(rgb, detector, shape_predictor, face_encoder)
 
     if not encodings:
         print(f"  Aviso: nenhum rosto encontrado em '{img_path.name}', pulando.")
@@ -72,12 +125,16 @@ def scan_frames(
 
     print(f"\nVarrendo {len(frame_files)} frames...")
 
+    detector, shape_predictor, face_encoder = _get_detector_and_encoder()
+
     all_known_encodings = []
     all_known_names = []
     for name, encodings in references.items():
         for enc in encodings:
             all_known_encodings.append(enc)
             all_known_names.append(name)
+
+    all_known_encodings = np.array(all_known_encodings)
 
     results = {}
     for name in references:
@@ -92,15 +149,12 @@ def scan_frames(
             continue
 
         rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        face_locations = face_recognition.face_locations(rgb, model="hog")
-        face_encodings = face_recognition.face_encodings(rgb, face_locations)
+        face_encodings = _encode_faces(rgb, detector, shape_predictor, face_encoder)
 
         for face_enc in face_encodings:
-            distances = face_recognition.face_distance(all_known_encodings, face_enc)
-            if len(distances) == 0:
-                continue
-
+            distances = np.linalg.norm(all_known_encodings - face_enc, axis=1)
             best_idx = np.argmin(distances)
+
             if distances[best_idx] <= tolerance:
                 matched_name = all_known_names[best_idx]
                 frame_number = i + 1
