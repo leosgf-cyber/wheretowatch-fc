@@ -41,11 +41,9 @@
       <!-- Apontar pasta -->
       <div id="people-folder" class="tab-content">
         <div class="form-row">
-          <div class="form-group" style="flex:1">
-            <label>Caminho da pasta</label>
-            <input type="text" id="refFolderPath" placeholder="/Users/leosgf/fotos_casamento/convidados">
-          </div>
-          <button class="btn btn-primary" id="scanFolderBtn" onclick="scanFolder()">Escanear</button>
+          <label class="btn btn-primary" for="refFolderInput" style="cursor:pointer;">Procurar pasta</label>
+          <input type="file" id="refFolderInput" webkitdirectory directory multiple style="display:none;" onchange="scanFolderFiles(this)">
+          <span id="refFolderName" style="color:#888; font-size:13px;"></span>
         </div>
         <div id="scanProgress" style="font-size:13px; color:#888; margin-top:8px;"></div>
       </div>
@@ -79,11 +77,9 @@
 
       <div id="videos-vfolder" class="tab-content">
         <div class="form-row">
-          <div class="form-group" style="flex:1">
-            <label>Caminho da pasta</label>
-            <input type="text" id="videoFolderPath" placeholder="/Users/leosgf/videos_casamento">
-          </div>
-          <button class="btn btn-primary" onclick="loadVideoFolder()">Carregar</button>
+          <label class="btn btn-primary" for="videoFolderInput" style="cursor:pointer;">Procurar pasta</label>
+          <input type="file" id="videoFolderInput" webkitdirectory directory multiple style="display:none;" onchange="loadVideoFolderFiles(this)">
+          <span id="videoFolderName" style="color:#888; font-size:13px;"></span>
         </div>
         <div id="videoFolderProgress" style="font-size:13px; color:#888; margin-top:8px;"></div>
       </div>

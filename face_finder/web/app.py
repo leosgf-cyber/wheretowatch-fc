@@ -140,25 +140,32 @@ pending_clusters = {}
 
 @app.route("/api/scan-folder", methods=["POST"])
 def scan_folder():
-    folder = request.json.get("path", "").strip()
-    if not folder:
-        return jsonify({"error": "Caminho da pasta é obrigatório"}), 400
+    files = request.files.getlist("photos")
+    if not files or not files[0].filename:
+        return jsonify({"error": "Nenhuma imagem recebida"}), 400
 
-    folder_path = Path(folder).expanduser()
-    if not folder_path.exists() or not folder_path.is_dir():
-        return jsonify({"error": f"Pasta não encontrada: {folder}"}), 400
+    scan_id = uuid.uuid4().hex[:8]
+    scan_upload_dir = RESULTS_DIR / f"scan_upload_{scan_id}"
+    scan_upload_dir.mkdir(parents=True, exist_ok=True)
 
     extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
-    images = [f for f in sorted(folder_path.iterdir())
-              if f.is_file() and f.suffix.lower() in extensions]
+    saved_files = []
+    for f in files:
+        if f.filename:
+            fname = Path(f.filename).name
+            ext = Path(fname).suffix.lower()
+            if ext in extensions:
+                dest = scan_upload_dir / fname
+                f.save(str(dest))
+                saved_files.append(dest)
 
-    if not images:
-        return jsonify({"error": "Nenhuma imagem encontrada na pasta"}), 400
+    if not saved_files:
+        return jsonify({"error": "Nenhuma imagem válida na pasta"}), 400
 
     detector, shape_predictor, face_encoder = _get_detector_and_encoder()
 
     faces = []
-    for img_path in images:
+    for img_path in sorted(saved_files):
         img = cv2.imread(str(img_path))
         if img is None:
             continue
@@ -208,7 +215,7 @@ def scan_folder():
         })
 
     pending_clusters[scan_id] = {
-        "folder": str(folder_path),
+        "upload_dir": str(scan_upload_dir),
         "clusters": clusters,
     }
 
@@ -233,9 +240,8 @@ def confirm_people():
 
     scan_data = pending_clusters[scan_id]
     clusters = scan_data["clusters"]
-    folder_path = Path(scan_data["folder"])
+    upload_dir = Path(scan_data["upload_dir"])
 
-    extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
     saved_count = 0
 
     for assignment in assignments:
@@ -252,7 +258,7 @@ def confirm_people():
 
         idx = 0
         for src in sources:
-            src_path = folder_path / src
+            src_path = upload_dir / src
             if src_path.exists():
                 ext = src_path.suffix.lower()
                 dest = person_dir / f"{name}_{idx + 1}{ext}"
@@ -266,23 +272,21 @@ def confirm_people():
 
 @app.route("/api/load-videos-folder", methods=["POST"])
 def load_videos_folder():
-    folder = request.json.get("path", "").strip()
-    if not folder:
-        return jsonify({"error": "Caminho da pasta é obrigatório"}), 400
-
-    folder_path = Path(folder).expanduser()
-    if not folder_path.exists() or not folder_path.is_dir():
-        return jsonify({"error": f"Pasta não encontrada: {folder}"}), 400
+    files = request.files.getlist("videos")
+    if not files or not files[0].filename:
+        return jsonify({"error": "Nenhum vídeo recebido"}), 400
 
     video_exts = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
     loaded = []
 
-    for f in sorted(folder_path.iterdir()):
-        if f.is_file() and f.suffix.lower() in video_exts:
-            dest = VIDEOS_DIR / f.name
-            if not dest.exists():
-                shutil.copy2(str(f), str(dest))
-            loaded.append(f.name)
+    for v in files:
+        if v.filename:
+            fname = Path(v.filename).name
+            if Path(fname).suffix.lower() in video_exts:
+                dest = VIDEOS_DIR / fname
+                if not dest.exists():
+                    v.save(str(dest))
+                loaded.append(fname)
 
     if not loaded:
         return jsonify({"error": "Nenhum vídeo encontrado na pasta"}), 400

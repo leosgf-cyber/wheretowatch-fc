@@ -117,28 +117,34 @@ async function deletePerson(name) {
 
 // ========== FOLDER SCAN ==========
 
-async function scanFolder() {
-  const pathInput = document.getElementById("refFolderPath");
-  const folderPath = pathInput.value.trim();
-  if (!folderPath) {
-    alert("Digite o caminho da pasta.");
+async function scanFolderFiles(input) {
+  if (input.files.length === 0) return;
+
+  var folderName = input.files[0].webkitRelativePath.split("/")[0];
+  document.getElementById("refFolderName").textContent = folderName + " (" + input.files.length + " arquivos)";
+  document.getElementById("scanProgress").textContent = "Enviando e detectando rostos...";
+
+  var formData = new FormData();
+  var imageCount = 0;
+  for (var i = 0; i < input.files.length; i++) {
+    var ext = input.files[i].name.split(".").pop().toLowerCase();
+    if (["jpg", "jpeg", "png", "bmp", "webp"].indexOf(ext) !== -1) {
+      formData.append("photos", input.files[i]);
+      imageCount++;
+    }
+  }
+
+  if (imageCount === 0) {
+    document.getElementById("scanProgress").textContent = "";
+    alert("Nenhuma imagem encontrada na pasta.");
     return;
   }
 
-  const btn = document.getElementById("scanFolderBtn");
-  btn.disabled = true;
-  btn.textContent = "Escaneando...";
-  document.getElementById("scanProgress").textContent = "Detectando rostos na pasta...";
+  document.getElementById("scanProgress").textContent =
+    "Enviando " + imageCount + " imagens e detectando rostos...";
 
-  const res = await fetch("/api/scan-folder", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: folderPath }),
-  });
-  const data = await res.json();
-
-  btn.disabled = false;
-  btn.textContent = "Escanear";
+  var res = await fetch("/api/scan-folder", { method: "POST", body: formData });
+  var data = await res.json();
 
   if (data.error) {
     document.getElementById("scanProgress").textContent = "";
@@ -151,6 +157,7 @@ async function scanFolder() {
     data.faces.length + " pessoa(s) unica(s) detectada(s). Nomeie abaixo:";
 
   showClusters(data.scan_id, data.faces);
+  input.value = "";
 }
 
 function showClusters(scanId, faces) {
@@ -277,22 +284,35 @@ async function deleteVideo(filename) {
   loadVideos();
 }
 
-async function loadVideoFolder() {
-  const pathInput = document.getElementById("videoFolderPath");
-  const folderPath = pathInput.value.trim();
-  if (!folderPath) {
-    alert("Digite o caminho da pasta.");
+async function loadVideoFolderFiles(input) {
+  if (input.files.length === 0) return;
+
+  var folderName = input.files[0].webkitRelativePath.split("/")[0];
+  document.getElementById("videoFolderName").textContent = folderName;
+
+  var formData = new FormData();
+  var videoCount = 0;
+  var videoExts = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
+
+  for (var i = 0; i < input.files.length; i++) {
+    var ext = input.files[i].name.split(".").pop().toLowerCase();
+    if (videoExts.indexOf(ext) !== -1) {
+      formData.append("videos", input.files[i]);
+      videoCount++;
+    }
+  }
+
+  if (videoCount === 0) {
+    document.getElementById("videoFolderProgress").textContent = "";
+    alert("Nenhum vídeo encontrado na pasta.");
     return;
   }
 
-  document.getElementById("videoFolderProgress").textContent = "Carregando vídeos...";
+  document.getElementById("videoFolderProgress").textContent =
+    "Enviando " + videoCount + " video(s)...";
 
-  const res = await fetch("/api/load-videos-folder", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: folderPath }),
-  });
-  const data = await res.json();
+  var res = await fetch("/api/load-videos-folder", { method: "POST", body: formData });
+  var data = await res.json();
 
   if (data.error) {
     document.getElementById("videoFolderProgress").textContent = "";
@@ -302,6 +322,7 @@ async function loadVideoFolder() {
 
   document.getElementById("videoFolderProgress").textContent =
     data.count + " video(s) carregado(s).";
+  input.value = "";
   loadVideos();
 }
 
