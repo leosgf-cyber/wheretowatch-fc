@@ -139,6 +139,51 @@ pending_clusters = {}
 scan_jobs = {}
 
 
+def _match_clusters_to_existing(clusters):
+    detector, shape_predictor, face_encoder = _get_detector_and_encoder()
+    extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+
+    known_people = {}
+    if REFERENCES_DIR.exists():
+        for person_dir in REFERENCES_DIR.iterdir():
+            if not person_dir.is_dir():
+                continue
+            for img_path in person_dir.iterdir():
+                if img_path.suffix.lower() not in extensions:
+                    continue
+                img = cv2.imread(str(img_path))
+                if img is None:
+                    continue
+                rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                detected = detector(rgb, 1)
+                for face_rect in detected:
+                    shape = shape_predictor(rgb, face_rect)
+                    enc = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+                    if person_dir.name not in known_people:
+                        known_people[person_dir.name] = []
+                    known_people[person_dir.name].append(enc)
+                    break
+
+    suggestions = {}
+    if known_people:
+        all_encs = []
+        all_names = []
+        for name, encs in known_people.items():
+            for enc in encs:
+                all_encs.append(enc)
+                all_names.append(name)
+        all_encs = np.array(all_encs)
+
+        for i, cluster in enumerate(clusters):
+            rep_enc = cluster["encodings"][0]
+            distances = np.linalg.norm(all_encs - rep_enc, axis=1)
+            best_idx = np.argmin(distances)
+            if distances[best_idx] <= 0.55:
+                suggestions[i] = all_names[best_idx]
+
+    return suggestions
+
+
 @app.route("/api/scan-ref-video", methods=["POST"])
 def scan_ref_video():
     video = request.files.get("video")
@@ -236,6 +281,8 @@ def _scan_ref_video_job(scan_id, video_path, fps, start, end):
         scan_upload_dir = RESULTS_DIR / f"scan_upload_{scan_id}"
         scan_upload_dir.mkdir(parents=True, exist_ok=True)
 
+        suggestions = _match_clusters_to_existing(clusters)
+
         cluster_data = []
         for idx, cluster in enumerate(clusters):
             thumb_name = f"face_{idx}.jpg"
@@ -246,12 +293,15 @@ def _scan_ref_video_job(scan_id, video_path, fps, start, end):
                 if src_path.exists():
                     shutil.copy2(str(src_path), str(scan_upload_dir / src))
 
-            cluster_data.append({
+            entry = {
                 "id": idx,
                 "thumb": thumb_name,
                 "photo_count": len(set(cluster["sources"])),
                 "sources": list(set(cluster["sources"]))[:3],
-            })
+            }
+            if idx in suggestions:
+                entry["suggested_name"] = suggestions[idx]
+            cluster_data.append(entry)
 
         pending_clusters[scan_id] = {
             "upload_dir": str(scan_upload_dir),
@@ -355,16 +405,21 @@ def _scan_folder_job(scan_id, saved_files, upload_dir):
         thumbs_dir = RESULTS_DIR / f"scan_{scan_id}"
         thumbs_dir.mkdir(parents=True, exist_ok=True)
 
+        suggestions = _match_clusters_to_existing(clusters)
+
         cluster_data = []
         for i, cluster in enumerate(clusters):
             thumb_name = f"face_{i}.jpg"
             cv2.imwrite(str(thumbs_dir / thumb_name), cluster["crop"])
-            cluster_data.append({
+            entry = {
                 "id": i,
                 "thumb": thumb_name,
                 "photo_count": len(cluster["sources"]),
                 "sources": list(set(cluster["sources"]))[:3],
-            })
+            }
+            if i in suggestions:
+                entry["suggested_name"] = suggestions[i]
+            cluster_data.append(entry)
 
         pending_clusters[scan_id] = {
             "upload_dir": upload_dir,

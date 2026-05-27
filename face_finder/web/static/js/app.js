@@ -250,12 +250,18 @@ function showClusters(scanId, faces) {
   faces.forEach(function (face) {
     const card = document.createElement("div");
     card.className = "cluster-card";
+    var suggestedName = face.suggested_name || "";
+    var matchTag = suggestedName
+      ? '<span class="match-tag">Ja cadastrado(a)</span>'
+      : '';
+
     card.innerHTML =
       '<img class="cluster-thumb" src="/api/scan-thumbs/' + scanId + '/' + face.thumb + '">' +
       '<div class="cluster-info">' +
+      matchTag +
       '<span class="count">' + face.photo_count + ' foto(s)</span>' +
       '<input type="text" class="cluster-name-input" data-id="' + face.id +
-      '" placeholder="Nome desta pessoa">' +
+      '" placeholder="Nome desta pessoa" value="' + escapeHtml(suggestedName) + '">' +
       '</div>';
     grid.appendChild(card);
   });

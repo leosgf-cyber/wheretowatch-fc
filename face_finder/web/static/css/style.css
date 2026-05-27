@@ -529,6 +529,16 @@ input[type="file"] {
   color: #888;
 }
 
+.match-tag {
+  display: inline-block;
+  background: #2d6a2e;
+  color: #8fdf8f;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
 .cluster-name-input {
   background: #0f0f0f;
   border: 1px solid #333;
