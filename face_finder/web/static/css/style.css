@@ -458,6 +458,33 @@ input[type="file"] {
   text-overflow: ellipsis;
 }
 
+.scan-progress-bar {
+  margin: 4px 0;
+}
+
+.scan-progress-track {
+  background: #0f0f0f;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 8px;
+  margin-bottom: 6px;
+}
+
+.scan-progress-fill {
+  height: 100%;
+  background: #4a9eff;
+  border-radius: 6px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.scan-progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #888;
+}
+
 .clustering-section {
   margin: 16px 0;
   padding: 16px;

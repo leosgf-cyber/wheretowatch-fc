@@ -136,6 +136,7 @@ def delete_video(filename):
 
 
 pending_clusters = {}
+scan_jobs = {}
 
 
 @app.route("/api/scan-folder", methods=["POST"])
@@ -162,64 +163,100 @@ def scan_folder():
     if not saved_files:
         return jsonify({"error": "Nenhuma imagem válida na pasta"}), 400
 
-    detector, shape_predictor, face_encoder = _get_detector_and_encoder()
-
-    faces = []
-    for img_path in sorted(saved_files):
-        img = cv2.imread(str(img_path))
-        if img is None:
-            continue
-        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        detected = detector(rgb, 1)
-        for face_rect in detected:
-            shape = shape_predictor(rgb, face_rect)
-            encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
-            crop = _crop_face(img, face_rect, padding=0.4)
-            faces.append({"encoding": encoding, "crop": crop, "source": img_path.name})
-
-    if not faces:
-        return jsonify({"error": "Nenhum rosto detectado nas imagens"}), 400
-
-    clusters = []
-    tolerance = 0.6
-    for face in faces:
-        matched = False
-        for cluster in clusters:
-            rep_enc = cluster["encodings"][0]
-            dist = np.linalg.norm(rep_enc - face["encoding"])
-            if dist <= tolerance:
-                cluster["encodings"].append(face["encoding"])
-                cluster["sources"].append(face["source"])
-                matched = True
-                break
-        if not matched:
-            clusters.append({
-                "encodings": [face["encoding"]],
-                "crop": face["crop"],
-                "sources": [face["source"]],
-            })
-
-    scan_id = uuid.uuid4().hex[:8]
-    thumbs_dir = RESULTS_DIR / f"scan_{scan_id}"
-    thumbs_dir.mkdir(parents=True, exist_ok=True)
-
-    cluster_data = []
-    for i, cluster in enumerate(clusters):
-        thumb_name = f"face_{i}.jpg"
-        cv2.imwrite(str(thumbs_dir / thumb_name), cluster["crop"])
-        cluster_data.append({
-            "id": i,
-            "thumb": thumb_name,
-            "photo_count": len(cluster["sources"]),
-            "sources": list(set(cluster["sources"]))[:3],
-        })
-
-    pending_clusters[scan_id] = {
-        "upload_dir": str(scan_upload_dir),
-        "clusters": clusters,
+    scan_jobs[scan_id] = {
+        "status": "processing",
+        "total": len(saved_files),
+        "processed": 0,
+        "faces_found": 0,
+        "result": None,
     }
 
-    return jsonify({"scan_id": scan_id, "faces": cluster_data})
+    thread = threading.Thread(
+        target=_scan_folder_job,
+        args=(scan_id, sorted(saved_files), str(scan_upload_dir)),
+        daemon=True,
+    )
+    thread.start()
+
+    return jsonify({"scan_id": scan_id, "total": len(saved_files)})
+
+
+def _scan_folder_job(scan_id, saved_files, upload_dir):
+    try:
+        detector, shape_predictor, face_encoder = _get_detector_and_encoder()
+
+        faces = []
+        for i, img_path in enumerate(saved_files):
+            scan_jobs[scan_id]["processed"] = i + 1
+
+            img = cv2.imread(str(img_path))
+            if img is None:
+                continue
+            rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            detected = detector(rgb, 1)
+            for face_rect in detected:
+                shape = shape_predictor(rgb, face_rect)
+                encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+                crop = _crop_face(img, face_rect, padding=0.4)
+                faces.append({"encoding": encoding, "crop": crop, "source": img_path.name})
+                scan_jobs[scan_id]["faces_found"] = len(faces)
+
+        if not faces:
+            scan_jobs[scan_id]["status"] = "error"
+            scan_jobs[scan_id]["error"] = "Nenhum rosto detectado nas imagens"
+            return
+
+        clusters = []
+        tolerance = 0.6
+        for face in faces:
+            matched = False
+            for cluster in clusters:
+                rep_enc = cluster["encodings"][0]
+                dist = np.linalg.norm(rep_enc - face["encoding"])
+                if dist <= tolerance:
+                    cluster["encodings"].append(face["encoding"])
+                    cluster["sources"].append(face["source"])
+                    matched = True
+                    break
+            if not matched:
+                clusters.append({
+                    "encodings": [face["encoding"]],
+                    "crop": face["crop"],
+                    "sources": [face["source"]],
+                })
+
+        thumbs_dir = RESULTS_DIR / f"scan_{scan_id}"
+        thumbs_dir.mkdir(parents=True, exist_ok=True)
+
+        cluster_data = []
+        for i, cluster in enumerate(clusters):
+            thumb_name = f"face_{i}.jpg"
+            cv2.imwrite(str(thumbs_dir / thumb_name), cluster["crop"])
+            cluster_data.append({
+                "id": i,
+                "thumb": thumb_name,
+                "photo_count": len(cluster["sources"]),
+                "sources": list(set(cluster["sources"]))[:3],
+            })
+
+        pending_clusters[scan_id] = {
+            "upload_dir": upload_dir,
+            "clusters": clusters,
+        }
+
+        scan_jobs[scan_id]["status"] = "done"
+        scan_jobs[scan_id]["result"] = cluster_data
+
+    except Exception as e:
+        scan_jobs[scan_id]["status"] = "error"
+        scan_jobs[scan_id]["error"] = str(e)
+
+
+@app.route("/api/scan-status/<scan_id>", methods=["GET"])
+def scan_status(scan_id):
+    if scan_id not in scan_jobs:
+        return jsonify({"error": "Scan não encontrado"}), 404
+    return jsonify(scan_jobs[scan_id])
 
 
 @app.route("/api/scan-thumbs/<scan_id>/<filename>")

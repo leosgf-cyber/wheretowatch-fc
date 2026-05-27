@@ -162,8 +162,12 @@ async function scanFolderFiles(input) {
     }
   }
 
-  document.getElementById("scanProgress").textContent =
-    "Enviando " + imageCount + " imagens e detectando rostos...";
+  document.getElementById("scanProgress").innerHTML =
+    '<div class="scan-progress-bar">' +
+    '<div class="scan-progress-track"><div class="scan-progress-fill" id="scanFill"></div></div>' +
+    '<div class="scan-progress-info">' +
+    '<span id="scanStatusText">Enviando ' + imageCount + ' imagens...</span>' +
+    '<span id="scanPercent">0%</span></div></div>';
 
   var res = await fetch("/api/scan-folder", { method: "POST", body: formData });
   var data = await res.json();
@@ -175,11 +179,38 @@ async function scanFolderFiles(input) {
   }
 
   currentScanId = data.scan_id;
-  document.getElementById("scanProgress").textContent =
-    data.faces.length + " pessoa(s) unica(s) detectada(s). Nomeie abaixo:";
-
-  showClusters(data.scan_id, data.faces);
+  pollScan(data.scan_id);
   input.value = "";
+}
+
+function pollScan(scanId) {
+  var interval = setInterval(async function () {
+    var res = await fetch("/api/scan-status/" + scanId);
+    var data = await res.json();
+
+    if (data.total > 0) {
+      var pct = Math.round((data.processed / data.total) * 100);
+      var fill = document.getElementById("scanFill");
+      var text = document.getElementById("scanStatusText");
+      var pctEl = document.getElementById("scanPercent");
+
+      if (fill) fill.style.width = pct + "%";
+      if (pctEl) pctEl.textContent = pct + "%";
+      if (text) text.textContent = data.processed + "/" + data.total +
+        " imagens | " + data.faces_found + " rosto(s) encontrado(s)";
+    }
+
+    if (data.status === "done") {
+      clearInterval(interval);
+      document.getElementById("scanProgress").textContent =
+        data.result.length + " pessoa(s) unica(s) detectada(s). Nomeie abaixo:";
+      showClusters(scanId, data.result);
+    } else if (data.status === "error") {
+      clearInterval(interval);
+      document.getElementById("scanProgress").textContent = "";
+      alert(data.error || "Erro no escaneamento");
+    }
+  }, 1000);
 }
 
 function showClusters(scanId, faces) {
