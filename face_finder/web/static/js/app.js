@@ -121,23 +121,45 @@ async function scanFolderFiles(input) {
   if (input.files.length === 0) return;
 
   var folderName = input.files[0].webkitRelativePath.split("/")[0];
-  document.getElementById("refFolderName").textContent = folderName + " (" + input.files.length + " arquivos)";
-  document.getElementById("scanProgress").textContent = "Enviando e detectando rostos...";
 
-  var formData = new FormData();
   var imageCount = 0;
   for (var i = 0; i < input.files.length; i++) {
     var ext = input.files[i].name.split(".").pop().toLowerCase();
     if (["jpg", "jpeg", "png", "bmp", "webp"].indexOf(ext) !== -1) {
-      formData.append("photos", input.files[i]);
       imageCount++;
     }
   }
 
   if (imageCount === 0) {
-    document.getElementById("scanProgress").textContent = "";
     alert("Nenhuma imagem encontrada na pasta.");
+    input.value = "";
     return;
+  }
+
+  var msg = 'Pasta selecionada: "' + folderName + '"\n\n' +
+    imageCount + " imagem(ns) encontrada(s) em " + input.files.length + " arquivo(s) total.\n\n";
+
+  if (imageCount > 200) {
+    msg += "Essa pasta tem bastante conteudo! O escaneamento pode demorar um pouco.\n" +
+      "Dica: se possivel, selecione uma pasta menor com apenas as fotos de referencia.\n\n";
+  }
+
+  msg += "Deseja continuar com o escaneamento?";
+
+  if (!confirm(msg)) {
+    input.value = "";
+    document.getElementById("refFolderName").textContent = "";
+    return;
+  }
+
+  document.getElementById("refFolderName").textContent = folderName + " (" + imageCount + " imagens)";
+
+  var formData = new FormData();
+  for (var i = 0; i < input.files.length; i++) {
+    var ext = input.files[i].name.split(".").pop().toLowerCase();
+    if (["jpg", "jpeg", "png", "bmp", "webp"].indexOf(ext) !== -1) {
+      formData.append("photos", input.files[i]);
+    }
   }
 
   document.getElementById("scanProgress").textContent =
@@ -288,24 +310,43 @@ async function loadVideoFolderFiles(input) {
   if (input.files.length === 0) return;
 
   var folderName = input.files[0].webkitRelativePath.split("/")[0];
-  document.getElementById("videoFolderName").textContent = folderName;
-
-  var formData = new FormData();
-  var videoCount = 0;
   var videoExts = ["mp4", "mov", "avi", "mkv", "webm", "m4v"];
 
+  var videoCount = 0;
+  var totalSize = 0;
   for (var i = 0; i < input.files.length; i++) {
     var ext = input.files[i].name.split(".").pop().toLowerCase();
     if (videoExts.indexOf(ext) !== -1) {
-      formData.append("videos", input.files[i]);
       videoCount++;
+      totalSize += input.files[i].size;
     }
   }
 
   if (videoCount === 0) {
-    document.getElementById("videoFolderProgress").textContent = "";
-    alert("Nenhum vídeo encontrado na pasta.");
+    alert("Nenhum video encontrado na pasta.");
+    input.value = "";
     return;
+  }
+
+  var sizeMB = (totalSize / (1024 * 1024)).toFixed(0);
+  var msg = 'Pasta selecionada: "' + folderName + '"\n\n' +
+    videoCount + " video(s) encontrado(s) (" + sizeMB + " MB total).\n\n" +
+    "Deseja carregar esses videos?";
+
+  if (!confirm(msg)) {
+    input.value = "";
+    document.getElementById("videoFolderName").textContent = "";
+    return;
+  }
+
+  document.getElementById("videoFolderName").textContent = folderName;
+
+  var formData = new FormData();
+  for (var i = 0; i < input.files.length; i++) {
+    var ext = input.files[i].name.split(".").pop().toLowerCase();
+    if (videoExts.indexOf(ext) !== -1) {
+      formData.append("videos", input.files[i]);
+    }
   }
 
   document.getElementById("videoFolderProgress").textContent =
