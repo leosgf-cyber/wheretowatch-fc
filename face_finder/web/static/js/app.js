@@ -195,7 +195,9 @@ async function scanFolderFiles(input) {
     }
     currentScanId = data.scan_id;
     document.getElementById("scanStatusText").textContent = "Detectando rostos...";
-    document.getElementById("scanFill").style.width = "0%";
+    var fill = document.getElementById("scanFill");
+    fill.style.width = "0%";
+    fill.classList.add("processing");
     document.getElementById("scanPercent").textContent = "0%";
     pollScan(data.scan_id);
   };

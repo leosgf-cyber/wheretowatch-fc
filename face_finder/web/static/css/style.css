@@ -478,6 +478,10 @@ input[type="file"] {
   transition: width 0.3s ease;
 }
 
+.scan-progress-fill.processing {
+  background: #f5a623;
+}
+
 .scan-progress-info {
   display: flex;
   justify-content: space-between;
