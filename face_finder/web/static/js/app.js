@@ -298,6 +298,105 @@ async function confirmClusters() {
   loadPeople();
 }
 
+// ========== REF VIDEO ==========
+
+async function scanRefVideo(input) {
+  if (input.files.length === 0) return;
+
+  var file = input.files[0];
+  var sizeMB = (file.size / (1024 * 1024)).toFixed(0);
+  document.getElementById("refVideoName").textContent = file.name + " (" + sizeMB + " MB)";
+
+  var formData = new FormData();
+  formData.append("video", file);
+  formData.append("fps", document.getElementById("refVideoFps").value);
+
+  var start = document.getElementById("refVideoStart").value.trim();
+  var end = document.getElementById("refVideoEnd").value.trim();
+  if (start) formData.append("start", start);
+  if (end) formData.append("end", end);
+
+  document.getElementById("refVideoProgress").innerHTML =
+    '<div class="scan-progress-bar">' +
+    '<div class="scan-progress-track"><div class="scan-progress-fill" id="refVidFill"></div></div>' +
+    '<div class="scan-progress-info">' +
+    '<span id="refVidStatusText">Enviando video...</span>' +
+    '<span id="refVidPercent">0%</span></div></div>';
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/scan-ref-video");
+
+  xhr.upload.onprogress = function (e) {
+    if (e.lengthComputable) {
+      var pct = Math.round((e.loaded / e.total) * 100);
+      var fill = document.getElementById("refVidFill");
+      var text = document.getElementById("refVidStatusText");
+      var pctEl = document.getElementById("refVidPercent");
+      if (fill) fill.style.width = pct + "%";
+      if (pctEl) pctEl.textContent = pct + "%";
+      var mb = (e.loaded / (1024 * 1024)).toFixed(0);
+      var totalMb = (e.total / (1024 * 1024)).toFixed(0);
+      if (text) text.textContent = "Enviando: " + mb + " / " + totalMb + " MB";
+    }
+  };
+
+  xhr.onload = function () {
+    var data = JSON.parse(xhr.responseText);
+    if (data.error) {
+      document.getElementById("refVideoProgress").textContent = "";
+      alert(data.error);
+      return;
+    }
+    currentScanId = data.scan_id;
+    var fill = document.getElementById("refVidFill");
+    fill.style.width = "0%";
+    fill.classList.add("processing");
+    document.getElementById("refVidStatusText").textContent = "Extraindo frames...";
+    document.getElementById("refVidPercent").textContent = "0%";
+    pollRefVideoScan(data.scan_id);
+  };
+
+  xhr.onerror = function () {
+    document.getElementById("refVideoProgress").textContent = "";
+    alert("Erro ao enviar video.");
+  };
+
+  xhr.send(formData);
+  input.value = "";
+}
+
+function pollRefVideoScan(scanId) {
+  var interval = setInterval(async function () {
+    var res = await fetch("/api/scan-status/" + scanId);
+    var data = await res.json();
+
+    var fill = document.getElementById("refVidFill");
+    var text = document.getElementById("refVidStatusText");
+    var pctEl = document.getElementById("refVidPercent");
+
+    if (data.phase === "extracting") {
+      if (text) text.textContent = "Extraindo frames do video...";
+    } else if (data.total > 0) {
+      var pct = Math.round((data.processed / data.total) * 100);
+      if (fill) fill.style.width = pct + "%";
+      if (pctEl) pctEl.textContent = pct + "%";
+      if (text) text.textContent = data.processed + "/" + data.total +
+        " frames | " + data.faces_found + " rosto(s)";
+    }
+
+    if (data.status === "done") {
+      clearInterval(interval);
+      document.getElementById("refVideoProgress").textContent =
+        data.result.length + " pessoa(s) unica(s) detectada(s). Nomeie abaixo:";
+      showClusters(scanId, data.result);
+    } else if (data.status === "error") {
+      clearInterval(interval);
+      document.getElementById("refVideoProgress").textContent = "";
+      alert(data.error || "Erro no escaneamento");
+    }
+  }, 1000);
+}
+
 // ========== VIDEOS ==========
 
 async function loadVideos() {

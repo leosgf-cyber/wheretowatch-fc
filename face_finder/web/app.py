@@ -139,6 +139,133 @@ pending_clusters = {}
 scan_jobs = {}
 
 
+@app.route("/api/scan-ref-video", methods=["POST"])
+def scan_ref_video():
+    video = request.files.get("video")
+    if not video or not video.filename:
+        return jsonify({"error": "Envie um vídeo"}), 400
+
+    scan_id = uuid.uuid4().hex[:8]
+    video_ext = Path(video.filename).suffix
+    video_path = RESULTS_DIR / f"refvid_{scan_id}{video_ext}"
+    video.save(str(video_path))
+
+    fps = float(request.form.get("fps", 2.0))
+    start = request.form.get("start") or None
+    end = request.form.get("end") or None
+
+    scan_jobs[scan_id] = {
+        "status": "processing",
+        "total": 0,
+        "processed": 0,
+        "faces_found": 0,
+        "phase": "extracting",
+        "result": None,
+    }
+
+    thread = threading.Thread(
+        target=_scan_ref_video_job,
+        args=(scan_id, str(video_path), fps, start, end),
+        daemon=True,
+    )
+    thread.start()
+
+    return jsonify({"scan_id": scan_id})
+
+
+def _scan_ref_video_job(scan_id, video_path, fps, start, end):
+    try:
+        frames_dir = str(RESULTS_DIR / f"refframes_{scan_id}")
+        scan_jobs[scan_id]["phase"] = "extracting"
+        extract_frames(video_path, frames_dir, fps, start, end)
+
+        frame_files = sorted(Path(frames_dir).glob("frame_*.jpg"))
+        scan_jobs[scan_id]["total"] = len(frame_files)
+        scan_jobs[scan_id]["phase"] = "detecting"
+
+        if not frame_files:
+            scan_jobs[scan_id]["status"] = "error"
+            scan_jobs[scan_id]["error"] = "Nenhum frame extraído do vídeo"
+            return
+
+        detector, shape_predictor, face_encoder = _get_detector_and_encoder()
+
+        faces = []
+        for i, frame_path in enumerate(frame_files):
+            scan_jobs[scan_id]["processed"] = i + 1
+
+            img = cv2.imread(str(frame_path))
+            if img is None:
+                continue
+            rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            detected = detector(rgb, 1)
+            for face_rect in detected:
+                shape = shape_predictor(rgb, face_rect)
+                encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+                crop = _crop_face(img, face_rect, padding=0.4)
+                faces.append({"encoding": encoding, "crop": crop, "source": frame_path.name})
+                scan_jobs[scan_id]["faces_found"] = len(faces)
+
+        if not faces:
+            scan_jobs[scan_id]["status"] = "error"
+            scan_jobs[scan_id]["error"] = "Nenhum rosto detectado no vídeo"
+            return
+
+        clusters = []
+        tolerance = 0.6
+        for face in faces:
+            matched = False
+            for cluster in clusters:
+                rep_enc = cluster["encodings"][0]
+                dist = np.linalg.norm(rep_enc - face["encoding"])
+                if dist <= tolerance:
+                    cluster["encodings"].append(face["encoding"])
+                    cluster["sources"].append(face["source"])
+                    matched = True
+                    break
+            if not matched:
+                clusters.append({
+                    "encodings": [face["encoding"]],
+                    "crop": face["crop"],
+                    "sources": [face["source"]],
+                })
+
+        thumbs_dir = RESULTS_DIR / f"scan_{scan_id}"
+        thumbs_dir.mkdir(parents=True, exist_ok=True)
+
+        scan_upload_dir = RESULTS_DIR / f"scan_upload_{scan_id}"
+        scan_upload_dir.mkdir(parents=True, exist_ok=True)
+
+        cluster_data = []
+        for idx, cluster in enumerate(clusters):
+            thumb_name = f"face_{idx}.jpg"
+            cv2.imwrite(str(thumbs_dir / thumb_name), cluster["crop"])
+
+            for src in set(cluster["sources"]):
+                src_path = Path(frames_dir) / src
+                if src_path.exists():
+                    shutil.copy2(str(src_path), str(scan_upload_dir / src))
+
+            cluster_data.append({
+                "id": idx,
+                "thumb": thumb_name,
+                "photo_count": len(set(cluster["sources"])),
+                "sources": list(set(cluster["sources"]))[:3],
+            })
+
+        pending_clusters[scan_id] = {
+            "upload_dir": str(scan_upload_dir),
+            "clusters": clusters,
+        }
+
+        scan_jobs[scan_id]["status"] = "done"
+        scan_jobs[scan_id]["result"] = cluster_data
+
+    except Exception as e:
+        scan_jobs[scan_id]["status"] = "error"
+        scan_jobs[scan_id]["error"] = str(e)
+
+
 @app.route("/api/scan-folder", methods=["POST"])
 def scan_folder():
     files = request.files.getlist("photos")
