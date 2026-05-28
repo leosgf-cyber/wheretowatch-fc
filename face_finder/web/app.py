@@ -196,6 +196,49 @@ def _match_clusters_to_existing(clusters):
     return suggestions
 
 
+def _cluster_faces(faces, tolerance=0.6):
+    clusters = []
+    for face in faces:
+        best_cluster = None
+        best_dist = float("inf")
+        for cluster in clusters:
+            mean_enc = np.mean(cluster["encodings"], axis=0)
+            dist = np.linalg.norm(mean_enc - face["encoding"])
+            if dist < best_dist:
+                best_dist = dist
+                best_cluster = cluster
+        if best_cluster is not None and best_dist <= tolerance:
+            best_cluster["encodings"].append(face["encoding"])
+            best_cluster["sources"].append(face["source"])
+        else:
+            clusters.append({
+                "encodings": [face["encoding"]],
+                "crop": face["crop"],
+                "sources": [face["source"]],
+            })
+
+    merged = True
+    while merged:
+        merged = False
+        i = 0
+        while i < len(clusters):
+            j = i + 1
+            while j < len(clusters):
+                mean_i = np.mean(clusters[i]["encodings"], axis=0)
+                mean_j = np.mean(clusters[j]["encodings"], axis=0)
+                if np.linalg.norm(mean_i - mean_j) <= tolerance:
+                    clusters[i]["encodings"].extend(clusters[j]["encodings"])
+                    clusters[i]["sources"].extend(clusters[j]["sources"])
+                    clusters.pop(j)
+                    merged = True
+                else:
+                    j += 1
+            i += 1
+
+    clusters.sort(key=lambda c: len(c["sources"]), reverse=True)
+    return clusters
+
+
 @app.route("/api/scan-ref-video", methods=["POST"])
 def scan_ref_video():
     video = request.files.get("video")
@@ -280,24 +323,7 @@ def _scan_ref_video_job(scan_id, video_path, fps, start, end):
             scan_jobs[scan_id]["error"] = "Nenhum rosto detectado no vídeo"
             return
 
-        clusters = []
-        tolerance = 0.6
-        for face in faces:
-            matched = False
-            for cluster in clusters:
-                rep_enc = cluster["encodings"][0]
-                dist = np.linalg.norm(rep_enc - face["encoding"])
-                if dist <= tolerance:
-                    cluster["encodings"].append(face["encoding"])
-                    cluster["sources"].append(face["source"])
-                    matched = True
-                    break
-            if not matched:
-                clusters.append({
-                    "encodings": [face["encoding"]],
-                    "crop": face["crop"],
-                    "sources": [face["source"]],
-                })
+        clusters = _cluster_faces(faces)
 
         thumbs_dir = RESULTS_DIR / f"scan_{scan_id}"
         thumbs_dir.mkdir(parents=True, exist_ok=True)
@@ -419,24 +445,7 @@ def _scan_folder_job(scan_id, saved_files, upload_dir):
             scan_jobs[scan_id]["error"] = "Nenhum rosto detectado nas imagens"
             return
 
-        clusters = []
-        tolerance = 0.6
-        for face in faces:
-            matched = False
-            for cluster in clusters:
-                rep_enc = cluster["encodings"][0]
-                dist = np.linalg.norm(rep_enc - face["encoding"])
-                if dist <= tolerance:
-                    cluster["encodings"].append(face["encoding"])
-                    cluster["sources"].append(face["source"])
-                    matched = True
-                    break
-            if not matched:
-                clusters.append({
-                    "encodings": [face["encoding"]],
-                    "crop": face["crop"],
-                    "sources": [face["source"]],
-                })
+        clusters = _cluster_faces(faces)
 
         thumbs_dir = RESULTS_DIR / f"scan_{scan_id}"
         thumbs_dir.mkdir(parents=True, exist_ok=True)
