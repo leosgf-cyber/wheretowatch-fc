@@ -245,6 +245,8 @@ var clusterPage = 0;
 var clusterPageSize = 8;
 var allClusterFaces = [];
 var currentClusterScanId = null;
+var skippedClusters = {};
+var selectedClusters = {};
 
 function showClusters(scanId, faces) {
   var section = document.getElementById("clusteringSection");
@@ -253,6 +255,8 @@ function showClusters(scanId, faces) {
   currentClusterScanId = scanId;
   clusterPage = 0;
   savedClusterNames = {};
+  skippedClusters = {};
+  selectedClusters = {};
   renderClusterPage();
 }
 
@@ -268,23 +272,35 @@ function renderClusterPage() {
   pageFaces.forEach(function (face) {
     var card = document.createElement("div");
     card.className = "cluster-card";
+    if (skippedClusters[face.id]) card.classList.add("skipped");
+    if (selectedClusters[face.id]) card.classList.add("selected");
 
-    var suggestedName = face.suggested_name || "";
-    var matchTag = suggestedName
+    var suggestedName = face.suggested_name || savedClusterNames[face.id] || "";
+    var matchTag = face.suggested_name
       ? '<span class="match-tag">Ja cadastrado(a)</span>'
       : '';
 
     card.innerHTML =
+      '<button class="cluster-skip-btn" onclick="event.stopPropagation(); toggleSkip(' + face.id + ')" title="Pular este rosto">&times;</button>' +
+      '<div class="cluster-select-overlay" onclick="toggleSelect(' + face.id + ')">' +
       '<img class="cluster-thumb" src="/api/scan-thumbs/' + currentClusterScanId + '/' + face.thumb + '">' +
+      '<div class="cluster-check"></div>' +
+      '</div>' +
       '<div class="cluster-info">' +
       matchTag +
       '<span class="count">' + face.photo_count + ' foto(s)</span>' +
       '<input type="text" class="cluster-name-input" data-id="' + face.id +
-      '" placeholder="Pular (sem nome = skip)" value="' + escapeHtml(suggestedName) + '">' +
+      '" placeholder="Nome desta pessoa" value="' + escapeHtml(suggestedName) + '"' +
+      (skippedClusters[face.id] ? ' disabled' : '') + '>' +
       '</div>';
     grid.appendChild(card);
   });
 
+  renderClusterNav(end, totalPages);
+  renderMergeBar();
+}
+
+function renderClusterNav(end, totalPages) {
   var nav = document.getElementById("clusterNav");
   if (!nav) {
     nav = document.createElement("div");
@@ -305,6 +321,75 @@ function renderClusterPage() {
       ? '<button class="btn btn-primary" onclick="nextClusterPage()">Proxima</button>'
       : '') +
     '</div>';
+}
+
+function renderMergeBar() {
+  var bar = document.getElementById("mergeBar");
+  var count = Object.keys(selectedClusters).length;
+
+  if (count < 2) {
+    if (bar) bar.remove();
+    return;
+  }
+
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "mergeBar";
+    bar.className = "merge-bar";
+    document.body.appendChild(bar);
+  }
+
+  bar.innerHTML =
+    '<span>' + count + ' rostos selecionados</span>' +
+    '<input type="text" id="mergeNameInput" placeholder="Nome desta pessoa (ex: Pai da Noiva)">' +
+    '<button class="btn btn-primary" onclick="mergeSelected()">Combinar</button>' +
+    '<button class="btn btn-secondary" onclick="clearSelection()">Cancelar</button>';
+}
+
+function toggleSkip(id) {
+  saveCurrentPageNames();
+  if (skippedClusters[id]) {
+    delete skippedClusters[id];
+  } else {
+    skippedClusters[id] = true;
+    delete selectedClusters[id];
+  }
+  renderClusterPage();
+  restorePageNames();
+}
+
+function toggleSelect(id) {
+  if (skippedClusters[id]) return;
+  saveCurrentPageNames();
+  if (selectedClusters[id]) {
+    delete selectedClusters[id];
+  } else {
+    selectedClusters[id] = true;
+  }
+  renderClusterPage();
+  restorePageNames();
+}
+
+function clearSelection() {
+  selectedClusters = {};
+  renderClusterPage();
+}
+
+function mergeSelected() {
+  var nameInput = document.getElementById("mergeNameInput");
+  var name = nameInput.value.trim();
+  if (!name) {
+    alert("Digite um nome pra combinar.");
+    return;
+  }
+
+  Object.keys(selectedClusters).forEach(function (id) {
+    savedClusterNames[parseInt(id)] = name;
+  });
+
+  selectedClusters = {};
+  renderClusterPage();
+  restorePageNames();
 }
 
 function nextClusterPage() {
@@ -338,8 +423,12 @@ var savedClusterNames = {};
 function saveCurrentPageNames() {
   var inputs = document.querySelectorAll(".cluster-name-input");
   inputs.forEach(function (input) {
-    var name = input.value.trim();
     var id = parseInt(input.dataset.id);
+    if (skippedClusters[id]) {
+      delete savedClusterNames[id];
+      return;
+    }
+    var name = input.value.trim();
     if (name) {
       savedClusterNames[id] = name;
     } else {

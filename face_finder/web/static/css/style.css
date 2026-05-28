@@ -508,6 +508,81 @@ input[type="file"] {
   border: 1px solid #333;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.cluster-card.selected {
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px #4a9eff44;
+}
+
+.cluster-card.skipped {
+  opacity: 0.35;
+}
+
+.cluster-card.skipped .cluster-thumb {
+  filter: grayscale(1);
+}
+
+.cluster-skip-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: all 0.2s;
+}
+
+.cluster-skip-btn:hover {
+  background: #ff4a4a;
+}
+
+.cluster-card.skipped .cluster-skip-btn {
+  background: #ff4a4a;
+}
+
+.cluster-select-overlay {
+  position: relative;
+  cursor: pointer;
+}
+
+.cluster-check {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.cluster-card.selected .cluster-check {
+  background: #4a9eff;
+  border-color: #4a9eff;
+}
+
+.cluster-card.selected .cluster-check::after {
+  content: "\2713";
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .cluster-thumb {
@@ -515,6 +590,41 @@ input[type="file"] {
   aspect-ratio: 1;
   object-fit: cover;
   display: block;
+}
+
+.merge-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  border: 1px solid #4a9eff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  flex-wrap: wrap;
+  max-width: 90vw;
+}
+
+.merge-bar span {
+  color: #4a9eff;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.merge-bar input {
+  background: #0f0f0f;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  min-width: 220px;
 }
 
 .cluster-info {
