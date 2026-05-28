@@ -241,43 +241,121 @@ function pollScan(scanId) {
   }, 1000);
 }
 
+var clusterPage = 0;
+var clusterPageSize = 8;
+var allClusterFaces = [];
+var currentClusterScanId = null;
+
 function showClusters(scanId, faces) {
-  const section = document.getElementById("clusteringSection");
-  const grid = document.getElementById("clusterGrid");
+  var section = document.getElementById("clusteringSection");
   section.style.display = "block";
+  allClusterFaces = faces;
+  currentClusterScanId = scanId;
+  clusterPage = 0;
+  savedClusterNames = {};
+  renderClusterPage();
+}
+
+function renderClusterPage() {
+  var grid = document.getElementById("clusterGrid");
   grid.innerHTML = "";
 
-  faces.forEach(function (face) {
-    const card = document.createElement("div");
+  var start = clusterPage * clusterPageSize;
+  var end = Math.min(start + clusterPageSize, allClusterFaces.length);
+  var pageFaces = allClusterFaces.slice(start, end);
+  var totalPages = Math.ceil(allClusterFaces.length / clusterPageSize);
+
+  pageFaces.forEach(function (face) {
+    var card = document.createElement("div");
     card.className = "cluster-card";
+
     var suggestedName = face.suggested_name || "";
     var matchTag = suggestedName
       ? '<span class="match-tag">Ja cadastrado(a)</span>'
       : '';
 
     card.innerHTML =
-      '<img class="cluster-thumb" src="/api/scan-thumbs/' + scanId + '/' + face.thumb + '">' +
+      '<img class="cluster-thumb" src="/api/scan-thumbs/' + currentClusterScanId + '/' + face.thumb + '">' +
       '<div class="cluster-info">' +
       matchTag +
       '<span class="count">' + face.photo_count + ' foto(s)</span>' +
       '<input type="text" class="cluster-name-input" data-id="' + face.id +
-      '" placeholder="Nome desta pessoa" value="' + escapeHtml(suggestedName) + '">' +
+      '" placeholder="Pular (sem nome = skip)" value="' + escapeHtml(suggestedName) + '">' +
       '</div>';
     grid.appendChild(card);
+  });
+
+  var nav = document.getElementById("clusterNav");
+  if (!nav) {
+    nav = document.createElement("div");
+    nav.id = "clusterNav";
+    nav.className = "cluster-nav";
+    var confirmBtn = document.querySelector("#clusteringSection .btn-primary");
+    confirmBtn.parentNode.insertBefore(nav, confirmBtn);
+  }
+
+  nav.innerHTML =
+    '<span class="cluster-page-info">Pagina ' + (clusterPage + 1) + ' de ' + totalPages +
+    ' (' + allClusterFaces.length + ' rostos)</span>' +
+    '<div class="cluster-nav-btns">' +
+    (clusterPage > 0
+      ? '<button class="btn btn-secondary" onclick="prevClusterPage()">Anterior</button>'
+      : '') +
+    (end < allClusterFaces.length
+      ? '<button class="btn btn-primary" onclick="nextClusterPage()">Proxima</button>'
+      : '') +
+    '</div>';
+}
+
+function nextClusterPage() {
+  saveCurrentPageNames();
+  clusterPage++;
+  renderClusterPage();
+  restorePageNames();
+  document.getElementById("clusteringSection").scrollIntoView({ behavior: "smooth" });
+}
+
+function prevClusterPage() {
+  saveCurrentPageNames();
+  clusterPage--;
+  renderClusterPage();
+  restorePageNames();
+  document.getElementById("clusteringSection").scrollIntoView({ behavior: "smooth" });
+}
+
+function restorePageNames() {
+  var inputs = document.querySelectorAll(".cluster-name-input");
+  inputs.forEach(function (input) {
+    var id = parseInt(input.dataset.id);
+    if (savedClusterNames[id]) {
+      input.value = savedClusterNames[id];
+    }
+  });
+}
+
+var savedClusterNames = {};
+
+function saveCurrentPageNames() {
+  var inputs = document.querySelectorAll(".cluster-name-input");
+  inputs.forEach(function (input) {
+    var name = input.value.trim();
+    var id = parseInt(input.dataset.id);
+    if (name) {
+      savedClusterNames[id] = name;
+    } else {
+      delete savedClusterNames[id];
+    }
   });
 }
 
 async function confirmClusters() {
   if (!currentScanId) return;
 
-  const inputs = document.querySelectorAll(".cluster-name-input");
-  const assignments = [];
+  saveCurrentPageNames();
 
-  inputs.forEach(function (input) {
-    const name = input.value.trim();
-    if (name) {
-      assignments.push({ id: parseInt(input.dataset.id), name: name });
-    }
+  var assignments = [];
+  Object.keys(savedClusterNames).forEach(function (id) {
+    assignments.push({ id: parseInt(id), name: savedClusterNames[id] });
   });
 
   if (assignments.length === 0) {

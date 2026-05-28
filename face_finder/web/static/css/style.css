@@ -550,8 +550,30 @@ input[type="file"] {
   width: 100%;
 }
 
+.cluster-name-input::placeholder {
+  color: #555;
+  font-style: italic;
+}
+
 .cluster-name-input:focus {
   border-color: #4a9eff;
+}
+
+.cluster-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0 8px;
+}
+
+.cluster-page-info {
+  font-size: 13px;
+  color: #888;
+}
+
+.cluster-nav-btns {
+  display: flex;
+  gap: 8px;
 }
 
 .no-results {
