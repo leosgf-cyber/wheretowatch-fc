@@ -9,10 +9,10 @@ cd "$(dirname "$0")/.."
 BRANCH=$(git branch --show-current)
 
 echo "Watching branch: $BRANCH"
-echo "Auto-pull every 5s + Flask hot-reload"
+echo "Auto-pull every 30s + Flask hot-reload"
 echo ""
 
-# Background: pull from origin every 5 seconds
+# Background: pull from origin every 30 seconds
 (
   while true; do
     git fetch --quiet origin "$BRANCH" 2>/dev/null
@@ -24,7 +24,7 @@ echo ""
       git pull --quiet origin "$BRANCH"
       echo ">>> Atualizado para $(git rev-parse --short HEAD)"
     fi
-    sleep 5
+    sleep 30
   done
 ) &
 

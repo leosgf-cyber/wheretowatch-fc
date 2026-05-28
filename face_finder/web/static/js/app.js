@@ -1,6 +1,11 @@
 let currentJobId = null;
 let currentScanId = null;
 
+function updateSensitivityLabel(value) {
+  var el = document.getElementById("sensitivityValue");
+  if (el) el.textContent = parseFloat(value).toFixed(2);
+}
+
 // Auto-reload do browser quando arquivos mudam no servidor
 (async function () {
   var initial = null;
