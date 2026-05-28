@@ -695,3 +695,15 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+async function cleanupTemp() {
+  if (!confirm("Remover todos os arquivos temporários (frames extraídos, scans antigos)?")) return;
+  var res = await fetch("/api/cleanup", { method: "POST" });
+  var data = await res.json();
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+  document.getElementById("cleanupResult").textContent =
+    data.freed_mb + " MB liberado(s)";
+}

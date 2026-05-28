@@ -12,12 +12,14 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from extractor import extract_frames
-from scanner import load_references, scan_frames, _get_detector_and_encoder, _crop_face
+from scanner import load_references, scan_frames, _get_detector_and_encoder, _crop_face, _resize_for_detection
 
 import cv2
+import dlib
 import numpy as np
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 * 1024  # 2GB
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = BASE_DIR / "uploads"
@@ -155,9 +157,19 @@ def _match_clusters_to_existing(clusters):
                 if img is None:
                     continue
                 rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                detected = detector(rgb, 1)
+                small_rgb, scale = _resize_for_detection(rgb)
+                detected = detector(small_rgb, 1)
                 for face_rect in detected:
-                    shape = shape_predictor(rgb, face_rect)
+                    if scale != 1.0:
+                        orig_face = dlib.rectangle(
+                            int(face_rect.left() / scale),
+                            int(face_rect.top() / scale),
+                            int(face_rect.right() / scale),
+                            int(face_rect.bottom() / scale),
+                        )
+                        shape = shape_predictor(rgb, orig_face)
+                    else:
+                        shape = shape_predictor(rgb, face_rect)
                     enc = np.array(face_encoder.compute_face_descriptor(rgb, shape))
                     if person_dir.name not in known_people:
                         known_people[person_dir.name] = []
@@ -243,11 +255,23 @@ def _scan_ref_video_job(scan_id, video_path, fps, start, end):
             if img is None:
                 continue
             rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            detected = detector(rgb, 1)
+            small_rgb, scale = _resize_for_detection(rgb)
+            detected = detector(small_rgb, 1)
             for face_rect in detected:
-                shape = shape_predictor(rgb, face_rect)
-                encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
-                crop = _crop_face(img, face_rect, padding=0.4)
+                if scale != 1.0:
+                    orig_face = dlib.rectangle(
+                        int(face_rect.left() / scale),
+                        int(face_rect.top() / scale),
+                        int(face_rect.right() / scale),
+                        int(face_rect.bottom() / scale),
+                    )
+                    shape = shape_predictor(rgb, orig_face)
+                    encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+                    crop = _crop_face(img, orig_face, padding=0.4)
+                else:
+                    shape = shape_predictor(rgb, face_rect)
+                    encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+                    crop = _crop_face(img, face_rect, padding=0.4)
                 faces.append({"encoding": encoding, "crop": crop, "source": frame_path.name})
                 scan_jobs[scan_id]["faces_found"] = len(faces)
 
@@ -370,11 +394,23 @@ def _scan_folder_job(scan_id, saved_files, upload_dir):
             if img is None:
                 continue
             rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            detected = detector(rgb, 1)
+            small_rgb, scale = _resize_for_detection(rgb)
+            detected = detector(small_rgb, 1)
             for face_rect in detected:
-                shape = shape_predictor(rgb, face_rect)
-                encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
-                crop = _crop_face(img, face_rect, padding=0.4)
+                if scale != 1.0:
+                    orig_face = dlib.rectangle(
+                        int(face_rect.left() / scale),
+                        int(face_rect.top() / scale),
+                        int(face_rect.right() / scale),
+                        int(face_rect.bottom() / scale),
+                    )
+                    shape = shape_predictor(rgb, orig_face)
+                    encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+                    crop = _crop_face(img, orig_face, padding=0.4)
+                else:
+                    shape = shape_predictor(rgb, face_rect)
+                    encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+                    crop = _crop_face(img, face_rect, padding=0.4)
                 faces.append({"encoding": encoding, "crop": crop, "source": img_path.name})
                 scan_jobs[scan_id]["faces_found"] = len(faces)
 
@@ -627,6 +663,49 @@ def get_match_image(job_id, filename):
     if matches_path.exists():
         return send_from_directory(str(matches_path), filename)
     return jsonify({"error": "Não encontrado"}), 404
+
+
+def _get_dir_size(path: Path) -> int:
+    """Get total size of a directory in bytes."""
+    total = 0
+    if path.is_dir():
+        for f in path.rglob("*"):
+            if f.is_file():
+                total += f.stat().st_size
+    elif path.is_file():
+        total = path.stat().st_size
+    return total
+
+
+@app.route("/api/cleanup", methods=["POST"])
+def cleanup():
+    """Delete temporary frames, scan, and refvid files from results/."""
+    freed = 0
+    deleted_items = []
+
+    if not RESULTS_DIR.exists():
+        return jsonify({"freed_bytes": 0, "freed_mb": 0, "deleted": []})
+
+    prefixes_dirs = ("frames_", "scan_upload_", "refframes_", "scan_")
+    prefixes_files = ("refvid_",)
+
+    for item in list(RESULTS_DIR.iterdir()):
+        if item.is_dir() and any(item.name.startswith(p) for p in prefixes_dirs):
+            size = _get_dir_size(item)
+            shutil.rmtree(item)
+            freed += size
+            deleted_items.append(item.name)
+        elif item.is_file() and any(item.name.startswith(p) for p in prefixes_files):
+            size = item.stat().st_size
+            item.unlink()
+            freed += size
+            deleted_items.append(item.name)
+
+    return jsonify({
+        "freed_bytes": freed,
+        "freed_mb": round(freed / (1024 * 1024), 2),
+        "deleted": deleted_items,
+    })
 
 
 if __name__ == "__main__":
