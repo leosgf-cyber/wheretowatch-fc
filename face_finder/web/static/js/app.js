@@ -394,6 +394,7 @@ async function scanRefVideo(input) {
   var formData = new FormData();
   formData.append("video", file);
   formData.append("fps", document.getElementById("refVideoFps").value);
+  formData.append("cluster_tolerance", document.getElementById("refVideoTolerance").value);
 
   var start = document.getElementById("refVideoStart").value.trim();
   var end = document.getElementById("refVideoEnd").value.trim();

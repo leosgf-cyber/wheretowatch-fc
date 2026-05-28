@@ -196,7 +196,7 @@ def _match_clusters_to_existing(clusters):
     return suggestions
 
 
-def _cluster_faces(faces, tolerance=0.6):
+def _cluster_faces(faces, tolerance=0.55, merge_tolerance=0.45):
     clusters = []
     for face in faces:
         best_cluster = None
@@ -226,7 +226,7 @@ def _cluster_faces(faces, tolerance=0.6):
             while j < len(clusters):
                 mean_i = np.mean(clusters[i]["encodings"], axis=0)
                 mean_j = np.mean(clusters[j]["encodings"], axis=0)
-                if np.linalg.norm(mean_i - mean_j) <= tolerance:
+                if np.linalg.norm(mean_i - mean_j) <= merge_tolerance:
                     clusters[i]["encodings"].extend(clusters[j]["encodings"])
                     clusters[i]["sources"].extend(clusters[j]["sources"])
                     clusters.pop(j)
@@ -251,6 +251,7 @@ def scan_ref_video():
     video.save(str(video_path))
 
     fps = float(request.form.get("fps", 2.0))
+    cluster_tolerance = float(request.form.get("cluster_tolerance", 0.55))
     start = request.form.get("start") or None
     end = request.form.get("end") or None
 
@@ -265,7 +266,7 @@ def scan_ref_video():
 
     thread = threading.Thread(
         target=_scan_ref_video_job,
-        args=(scan_id, str(video_path), fps, start, end),
+        args=(scan_id, str(video_path), fps, start, end, cluster_tolerance),
         daemon=True,
     )
     thread.start()
@@ -273,7 +274,7 @@ def scan_ref_video():
     return jsonify({"scan_id": scan_id})
 
 
-def _scan_ref_video_job(scan_id, video_path, fps, start, end):
+def _scan_ref_video_job(scan_id, video_path, fps, start, end, cluster_tolerance=0.55):
     try:
         frames_dir = str(RESULTS_DIR / f"refframes_{scan_id}")
         scan_jobs[scan_id]["phase"] = "extracting"
@@ -323,7 +324,7 @@ def _scan_ref_video_job(scan_id, video_path, fps, start, end):
             scan_jobs[scan_id]["error"] = "Nenhum rosto detectado no vídeo"
             return
 
-        clusters = _cluster_faces(faces)
+        clusters = _cluster_faces(faces, tolerance=cluster_tolerance)
 
         thumbs_dir = RESULTS_DIR / f"scan_{scan_id}"
         thumbs_dir.mkdir(parents=True, exist_ok=True)
