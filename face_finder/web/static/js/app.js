@@ -290,7 +290,9 @@ function renderClusterPage() {
       matchTag +
       '<span class="count">' + face.photo_count + ' foto(s)</span>' +
       '<input type="text" class="cluster-name-input" data-id="' + face.id +
-      '" placeholder="Nome desta pessoa" value="' + escapeHtml(suggestedName) + '"' +
+      '" data-original="' + escapeHtml(suggestedName) + '"' +
+      ' onblur="confirmNameChange(this)"' +
+      ' placeholder="Nome desta pessoa" value="' + escapeHtml(suggestedName) + '"' +
       (skippedClusters[face.id] ? ' disabled' : '') + '>' +
       '</div>';
     grid.appendChild(card);
@@ -414,8 +416,24 @@ function restorePageNames() {
     var id = parseInt(input.dataset.id);
     if (savedClusterNames[id]) {
       input.value = savedClusterNames[id];
+      input.dataset.original = savedClusterNames[id];
     }
   });
+}
+
+function confirmNameChange(input) {
+  var original = input.dataset.original || "";
+  var current = input.value.trim();
+  if (!original || current === original || current === "") return;
+
+  var msg = 'Mudar de "' + original + '" para "' + current + '"?';
+  if (!confirm(msg)) {
+    input.value = original;
+  } else {
+    input.dataset.original = current;
+    var id = parseInt(input.dataset.id);
+    savedClusterNames[id] = current;
+  }
 }
 
 var savedClusterNames = {};
