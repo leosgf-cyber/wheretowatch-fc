@@ -183,6 +183,7 @@ async function scanFolderFiles(input) {
       formData.append("photos", input.files[i]);
     }
   }
+  formData.append("cluster_tolerance", document.getElementById("globalTolerance").value);
 
   document.getElementById("scanProgress").innerHTML =
     '<div class="scan-progress-bar">' +
@@ -523,7 +524,7 @@ async function scanRefVideo(input) {
   var formData = new FormData();
   formData.append("video", file);
   formData.append("fps", document.getElementById("refVideoFps").value);
-  formData.append("cluster_tolerance", document.getElementById("refVideoTolerance").value);
+  formData.append("cluster_tolerance", document.getElementById("globalTolerance").value);
 
   var start = document.getElementById("refVideoStart").value.trim();
   var end = document.getElementById("refVideoEnd").value.trim();

@@ -411,9 +411,11 @@ def scan_folder():
         "result": None,
     }
 
+    cluster_tolerance = float(request.form.get("cluster_tolerance", 0.55))
+
     thread = threading.Thread(
         target=_scan_folder_job,
-        args=(scan_id, sorted(saved_files), str(scan_upload_dir)),
+        args=(scan_id, sorted(saved_files), str(scan_upload_dir), cluster_tolerance),
         daemon=True,
     )
     thread.start()
@@ -421,7 +423,7 @@ def scan_folder():
     return jsonify({"scan_id": scan_id, "total": len(saved_files)})
 
 
-def _scan_folder_job(scan_id, saved_files, upload_dir):
+def _scan_folder_job(scan_id, saved_files, upload_dir, cluster_tolerance=0.55):
     try:
         detector, shape_predictor, face_encoder = _get_detector_and_encoder()
 
@@ -458,7 +460,7 @@ def _scan_folder_job(scan_id, saved_files, upload_dir):
             scan_jobs[scan_id]["error"] = "Nenhum rosto detectado nas imagens"
             return
 
-        clusters = _cluster_faces(faces)
+        clusters = _cluster_faces(faces, tolerance=cluster_tolerance)
 
         thumbs_dir = RESULTS_DIR / f"scan_{scan_id}"
         thumbs_dir.mkdir(parents=True, exist_ok=True)

@@ -17,6 +17,18 @@
     <div class="section">
       <h2>1. Cadastrar Pessoas</h2>
 
+      <!-- Sensibilidade global -->
+      <div class="sensitivity-section">
+        <label class="sensitivity-label">Sensibilidade do agrupamento automático</label>
+        <div class="slider-row">
+          <span class="slider-label-left">Separar mais</span>
+          <input type="range" id="globalTolerance" min="0.35" max="0.70" step="0.05" value="0.55" oninput="updateSensitivityLabel(this.value)">
+          <span class="slider-label-right">Agrupar mais</span>
+          <span class="slider-value" id="sensitivityValue">0.55</span>
+        </div>
+        <div class="sensitivity-hint">Aplica-se ao escanear pastas e vídeos de referência</div>
+      </div>
+
       <div class="tab-bar">
         <button class="tab active" onclick="switchTab('people', 'manual', this)">Upload manual</button>
         <button class="tab" onclick="switchTab('people', 'folder', this)">Apontar pasta</button>
@@ -68,16 +80,6 @@
           <div class="form-group">
             <label>Fim (opcional)</label>
             <input type="text" id="refVideoEnd" placeholder="00:30">
-          </div>
-        </div>
-
-        <div class="form-group" style="margin-top:12px;">
-          <label>Sensibilidade do agrupamento</label>
-          <div class="slider-row">
-            <span class="slider-label-left">Separar mais</span>
-            <input type="range" id="refVideoTolerance" min="0.35" max="0.70" step="0.05" value="0.55" oninput="updateSensitivityLabel(this.value)">
-            <span class="slider-label-right">Agrupar mais</span>
-            <span class="slider-value" id="sensitivityValue">0.55</span>
           </div>
         </div>
 
