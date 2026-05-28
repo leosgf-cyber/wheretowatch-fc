@@ -45,7 +45,7 @@ def _get_detector_and_encoder():
     return detector, shape_predictor, face_encoder
 
 
-def _resize_for_detection(rgb, max_width=800):
+def _resize_for_detection(rgb, max_width=1200):
     """Resize image for faster face detection, keeping aspect ratio.
 
     Returns (resized_rgb, scale_factor). scale_factor is 1.0 if no resize needed.

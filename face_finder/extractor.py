@@ -55,7 +55,7 @@ def extract_frames(
 
     cmd += [
         "-i", str(video),
-        "-vf", f"fps={fps},scale=-1:720:force_original_aspect_ratio=decrease",
+        "-vf", f"fps={fps},scale=-1:1080:force_original_aspect_ratio=decrease",
         "-frame_pts", "1",
         str(out / "frame_%06d.jpg"),
     ]
