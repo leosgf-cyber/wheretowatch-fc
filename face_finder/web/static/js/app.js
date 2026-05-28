@@ -1,6 +1,23 @@
 let currentJobId = null;
 let currentScanId = null;
 
+// Auto-reload do browser quando arquivos mudam no servidor
+(async function () {
+  var initial = null;
+  setInterval(async function () {
+    try {
+      var res = await fetch("/api/version");
+      var data = await res.json();
+      if (initial === null) {
+        initial = data.version;
+      } else if (data.version !== initial) {
+        console.log("Mudanças detectadas, recarregando...");
+        location.reload();
+      }
+    } catch (e) {}
+  }, 3000);
+})();
+
 document.getElementById("personPhotos").addEventListener("change", function () {
   const count = this.files.length;
   const el = document.getElementById("selectedFiles");

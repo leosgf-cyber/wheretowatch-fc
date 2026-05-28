@@ -38,6 +38,18 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/api/version")
+def get_version():
+    static_dir = Path(__file__).resolve().parent / "static"
+    templates_dir = Path(__file__).resolve().parent / "templates"
+    latest = 0
+    for d in [static_dir, templates_dir]:
+        for f in d.rglob("*"):
+            if f.is_file():
+                latest = max(latest, f.stat().st_mtime)
+    return jsonify({"version": int(latest)})
+
+
 @app.route("/api/people", methods=["GET"])
 def list_people():
     people = []
