@@ -581,6 +581,7 @@ def start_processing():
         "progress": "Iniciando...",
         "videos": video_names,
         "results": None,
+        "partial_matches": 0,
     }
 
     thread = threading.Thread(
@@ -617,6 +618,17 @@ def _process_job(job_id, video_paths, video_names, fps, tolerance, start, end):
                 if name not in all_results:
                     all_results[name] = []
                 all_results[name].extend(matches)
+
+            total_matches = sum(len(v) for v in all_results.values())
+            people_found = len(all_results)
+            jobs[job_id]["partial_matches"] = total_matches
+            jobs[job_id]["progress"] = f"Video {idx + 1}/{len(video_paths)} concluido | {people_found} pessoa(s), {total_matches} match(es)"
+
+            # Auto-cleanup: remove frames directory after scanning
+            try:
+                shutil.rmtree(frames_dir)
+            except Exception:
+                pass
 
         result_path = RESULTS_DIR / f"{job_id}.json"
         with open(result_path, "w", encoding="utf-8") as f:

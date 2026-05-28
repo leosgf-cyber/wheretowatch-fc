@@ -192,6 +192,48 @@ def _load_face(img_path, name, people, detector, shape_predictor, face_encoder):
     people[name].append(encodings[0])
 
 
+def _frames_are_similar(frame_a, frame_b, threshold=0.95):
+    if frame_a is None or frame_b is None:
+        return False
+    gray_a = cv2.cvtColor(frame_a, cv2.COLOR_BGR2GRAY)
+    gray_b = cv2.cvtColor(frame_b, cv2.COLOR_BGR2GRAY)
+    small_a = cv2.resize(gray_a, (160, 90))
+    small_b = cv2.resize(gray_b, (160, 90))
+    score = np.mean(np.abs(small_a.astype(float) - small_b.astype(float)))
+    return score < (1 - threshold) * 255
+
+
+def _detect_and_encode(args):
+    frame_path, detector_data = args
+    detector, shape_predictor, face_encoder = detector_data
+
+    img = cv2.imread(str(frame_path))
+    if img is None:
+        return frame_path, img, []
+
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    small_rgb, scale = _resize_for_detection(rgb)
+    faces = detector(small_rgb, 1)
+    face_encodings = []
+    for face in faces:
+        if scale != 1.0:
+            orig_face = dlib.rectangle(
+                int(face.left() / scale),
+                int(face.top() / scale),
+                int(face.right() / scale),
+                int(face.bottom() / scale),
+            )
+            shape = shape_predictor(rgb, orig_face)
+            encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+            face_encodings.append((encoding, orig_face))
+        else:
+            shape = shape_predictor(rgb, face)
+            encoding = np.array(face_encoder.compute_face_descriptor(rgb, shape))
+            face_encodings.append((encoding, face))
+
+    return frame_path, img, face_encodings
+
+
 def scan_frames(
     frames_dir: str,
     references: dict,
@@ -209,8 +251,6 @@ def scan_frames(
     if matches_dir:
         Path(matches_dir).mkdir(parents=True, exist_ok=True)
 
-    print(f"\nVarrendo {len(frame_files)} frames...")
-
     detector, shape_predictor, face_encoder = _get_detector_and_encoder()
 
     all_known_encodings = []
@@ -222,15 +262,31 @@ def scan_frames(
 
     all_known_encodings = np.array(all_known_encodings)
 
+    prev_frame = None
+    skipped = 0
+    to_process = []
+    for i, frame_file in enumerate(frame_files):
+        img = cv2.imread(str(frame_file))
+        if img is None:
+            continue
+        if _frames_are_similar(prev_frame, img):
+            skipped += 1
+            prev_frame = img
+            continue
+        prev_frame = img
+        to_process.append((i, frame_file))
+
+    print(f"\nVarrendo {len(to_process)} frames ({skipped} similares pulados de {len(frame_files)} total)...")
+
     results = {}
     for name in references:
         results[name] = []
 
     match_counter = 0
 
-    for i, frame_file in enumerate(frame_files):
-        if (i + 1) % 50 == 0 or i == 0:
-            print(f"  Processando frame {i + 1}/{len(frame_files)}...")
+    for idx, (i, frame_file) in enumerate(to_process):
+        if (idx + 1) % 50 == 0 or idx == 0:
+            print(f"  Processando {idx + 1}/{len(to_process)}...")
 
         img = cv2.imread(str(frame_file))
         if img is None:

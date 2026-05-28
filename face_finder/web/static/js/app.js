@@ -585,7 +585,11 @@ function pollJob(jobId) {
     const res = await fetch("/api/jobs/" + jobId);
     const job = await res.json();
 
-    document.getElementById("progressText").textContent = job.progress;
+    var progressMsg = job.progress;
+    if (job.partial_matches > 0 && job.status === "processing") {
+      progressMsg += " | " + job.partial_matches + " match(es) ate agora";
+    }
+    document.getElementById("progressText").textContent = progressMsg;
 
     if (job.status === "done") {
       clearInterval(interval);
