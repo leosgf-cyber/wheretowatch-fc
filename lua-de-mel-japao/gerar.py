@@ -129,15 +129,19 @@ assert cont == ALVO, f"Faixas = {cont}, alvo = {ALVO}"
 
 # ================= HTML =================
 def card(n, t, emoji, nome, preco, ref, kw, desc):
+    # tags: usa no máximo 2 para não zerar resultados; lock fixa a foto (definitiva)
+    tags = ",".join(kw.split(",")[:2])
+    img = f"https://loremflickr.com/600/450/{tags}?lock={n}"
+    preco_fmt = f"{preco:,}".replace(",", ".")
     return f'''      <div class="card" data-tema="{t}" data-faixa="{faixa(preco)}">
-        <div class="thumb"><span class="theme">{emoji} {t}</span><span class="num">{n:02d}</span><img loading="lazy" src="https://loremflickr.com/600/450/{kw}" alt="{nome}"></div>
+        <div class="thumb"><span class="theme">{emoji} {t}</span><span class="num">{n:02d}</span><img loading="lazy" src="{img}" alt="{nome}"></div>
         <div class="body">
           <h3>{nome}</h3>
           <p>{desc}</p>
-          <div class="price">R$ {preco:,}</div>
+          <div class="price">R$ {preco_fmt}</div>
           <div class="ref">{ref}</div>
         </div>
-      </div>'''.replace(",", ".")
+      </div>'''
 
 ordem = [G, D, L, H]
 secoes = ""
