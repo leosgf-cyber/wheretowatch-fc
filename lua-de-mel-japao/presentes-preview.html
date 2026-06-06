@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lua de Mel no Japão — Lista de Presentes (Prévia · 10 de 95)</title>
+<style>
+  :root{
+    --bg:#f3eae8;          /* rosa claro da referência */
+    --ink:#2b2b2b;
+    --muted:#8a8079;
+    --card:#ffffff;
+    --grad-top:#7fb8e6;     /* azul */
+    --grad-bot:#7fd0c4;     /* verde-água */
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Georgia","Times New Roman",serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:32px 20px 80px}
+  header h1{font-size:34px;margin:0 0 6px;letter-spacing:.3px}
+  header .sub{color:var(--muted);font-size:17px;margin:0 0 4px;font-family:Helvetica,Arial,sans-serif}
+  header .sub b{color:var(--ink)}
+  header .count{font-size:26px;font-weight:bold;margin:14px 0 0}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 8px;font-family:Helvetica,Arial,sans-serif;font-size:13px}
+  .tag{padding:5px 12px;border-radius:999px;background:#fff;color:var(--muted);border:1px solid #e4d8d4}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px;margin-top:24px}
+  .card{
+    background:var(--card);border-radius:18px;overflow:hidden;
+    box-shadow:0 6px 18px rgba(120,90,80,.10);display:flex;flex-direction:column;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{transform:translateY(-4px);box-shadow:0 12px 26px rgba(120,90,80,.16)}
+  .thumb{position:relative;aspect-ratio:4/3;background:linear-gradient(180deg,var(--grad-top),var(--grad-bot))}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .theme{
+    position:absolute;top:10px;left:10px;font-family:Helvetica,Arial,sans-serif;
+    font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+    background:rgba(255,255,255,.92);color:#4a4a4a;padding:4px 10px;border-radius:999px;
+  }
+  .body{padding:16px 16px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .body h3{margin:0;font-size:18px;line-height:1.25}
+  .body p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5;font-family:Helvetica,Arial,sans-serif;flex:1}
+  .price{font-family:Helvetica,Arial,sans-serif;font-weight:800;font-size:20px;color:#2f8f86;margin-top:6px}
+  .ref{font-family:Helvetica,Arial,sans-serif;font-size:11px;color:#b3a79f}
+  footer{margin-top:40px;color:var(--muted);font-size:13px;font-family:Helvetica,Arial,sans-serif;text-align:center;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Lista feita para vocês 🇯🇵💍</h1>
+    <p class="sub">Com base em <b>18 dias</b> de lua de mel no Japão, recomendamos</p>
+    <p class="count">10 presentes <span style="font-size:16px;color:var(--muted);font-weight:normal">(prévia · faltam 85)</span></p>
+    <div class="legend">
+      <span class="tag">🍣 Gastronomia</span>
+      <span class="tag">🎎 Diversão & Cultura</span>
+      <span class="tag">🚄 Logística</span>
+      <span class="tag">♨️ Hospedagem</span>
+      <span class="tag">💱 1 iene ≈ R$ 0,032</span>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- 1 -->
+    <div class="card">
+      <div class="thumb"><span class="theme">🍣 Gastronomia</span><img loading="lazy" src="https://loremflickr.com/600/450/omakase,sushi" alt="Omakase"></div>
+      <div class="body">
+        <h3>Omakase no balcão</h3>
+        <p>Sentar no balcão e deixar o itamae decidir cada peça. Vocês só dizem "arigatô" e abrem a boca. 🍣</p>
+        <div class="price">R$ 120</div>
+        <div class="ref">por pessoa · sushi lunch ~¥3.800</div>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="card">
+      <div class="thumb"><span class="theme">🍣 Gastronomia</span><img loading="lazy" src="https://loremflickr.com/600/450/ramen,tokyo" alt="Ramen"></div>
+      <div class="body">
+        <h3>Tour de ramen em Shinjuku</h3>
+        <p>Uma maratona de tigelas fumegantes pelos becos de Tóquio, guiada por quem sabe onde mora o melhor caldo. 🍜</p>
+        <div class="price">R$ 100</div>
+        <div class="ref">por pessoa · tour gastronômico ~¥3.000</div>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="card">
+      <div class="thumb"><span class="theme">🍣 Gastronomia</span><img loading="lazy" src="https://loremflickr.com/600/450/wagyu,beef" alt="Wagyu"></div>
+      <div class="body">
+        <h3>Jantar de Wagyu</h3>
+        <p>Carne que derrete antes de mastigar, grelhada na brasa bem na frente de vocês. Yakiniku premium para brindar. 🥩</p>
+        <div class="price">R$ 350</div>
+        <div class="ref">para o casal · ~¥11.000</div>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="card">
+      <div class="thumb"><span class="theme">🎎 Diversão & Cultura</span><img loading="lazy" src="https://loremflickr.com/600/450/tea,ceremony,kyoto" alt="Cerimônia do chá"></div>
+      <div class="body">
+        <h3>Cerimônia do chá em Kyoto</h3>
+        <p>Ajoelhar no tatami, bater o matcha e respirar fundo. Um momento de silêncio a dois antes da próxima aventura. 🍵</p>
+        <div class="price">R$ 160</div>
+        <div class="ref">para o casal · ~¥5.000</div>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="card">
+      <div class="thumb"><span class="theme">🎎 Diversão & Cultura</span><img loading="lazy" src="https://loremflickr.com/600/450/teamlab,digital,art" alt="teamLab"></div>
+      <div class="body">
+        <h3>Ingressos teamLab</h3>
+        <p>Andar de mãos dadas dentro de um mar de luzes e flores digitais. Foto de casamento? Já temos a próxima. ✨</p>
+        <div class="price">R$ 240</div>
+        <div class="ref">2 ingressos · ~¥3.800 cada</div>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="card">
+      <div class="thumb"><span class="theme">🎎 Diversão & Cultura</span><img loading="lazy" src="https://loremflickr.com/600/450/kimono,kyoto" alt="Quimono"></div>
+      <div class="body">
+        <h3>Quimono + passeio em Kyoto</h3>
+        <p>Vestir-se a caráter e perambular pelas ruelas de Gion como num filme antigo. 👘</p>
+        <div class="price">R$ 200</div>
+        <div class="ref">para o casal · aluguel ~¥6.000</div>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="card">
+      <div class="thumb"><span class="theme">🎎 Diversão & Cultura</span><img loading="lazy" src="https://loremflickr.com/600/450/mount,fuji,japan" alt="Monte Fuji"></div>
+      <div class="body">
+        <h3>Bate-volta ao Monte Fuji</h3>
+        <p>Um dia inteiro caçando o melhor ângulo da montanha mais famosa do Japão, com lago, teleférico e muita foto. 🗻</p>
+        <div class="price">R$ 450</div>
+        <div class="ref">para o casal · tour guiado ~¥14.000</div>
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="card">
+      <div class="thumb"><span class="theme">🚄 Logística</span><img loading="lazy" src="https://loremflickr.com/600/450/shinkansen,train" alt="Shinkansen"></div>
+      <div class="body">
+        <h3>Japan Rail Pass · 7 dias</h3>
+        <p>O passe mágico do trem-bala. Tóquio, Kyoto, Osaka — o Japão inteiro a 300 km/h, sem dor de cabeça. 🚄</p>
+        <div class="price">R$ 1.600</div>
+        <div class="ref">por pessoa · JR Pass 7 dias ~¥50.000</div>
+      </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="card">
+      <div class="thumb"><span class="theme">♨️ Hospedagem</span><img loading="lazy" src="https://loremflickr.com/600/450/ryokan,onsen" alt="Ryokan"></div>
+      <div class="body">
+        <h3>Diária em ryokan com onsen</h3>
+        <p>Futon no tatami, banho termal privativo e um jantar kaiseki interminável. O auge do romance japonês. ♨️</p>
+        <div class="price">R$ 950</div>
+        <div class="ref">1 diária para o casal · ~¥30.000</div>
+      </div>
+    </div>
+
+    <!-- 10 -->
+    <div class="card">
+      <div class="thumb"><span class="theme">♨️ Hospedagem</span><img loading="lazy" src="https://loremflickr.com/600/450/tokyo,hotel,skyline" alt="Hotel em Tóquio"></div>
+      <div class="body">
+        <h3>Diária em hotel em Shibuya</h3>
+        <p>Acordar com a vista dos arranha-céus de Tóquio e o cruzamento mais movimentado do mundo logo ali embaixo. 🏙️</p>
+        <div class="price">R$ 480</div>
+        <div class="ref">1 diária para o casal · ~¥15.000</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    Prévia com 10 de 95 presentes · Valores em reais convertidos do iene (~R$ 0,032/¥), arredondados e baseados em
+    referências do Numbeo e de portais de viagem (jun/2026).<br>
+    Imagens ilustrativas (placeholders por palavra-chave) — trocamos pelas definitivas na versão final.
+  </footer>
+</div>
+</body>
+</html>
