@@ -1,0 +1,4 @@
+build/
+*.o
+sf_tests
+.pio/
